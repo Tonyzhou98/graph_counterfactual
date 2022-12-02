@@ -58,6 +58,7 @@ parser.add_argument('--dataset', type=str, default='synthetic',
                     choices=['synthetic', 'bail', 'credit'])
 parser.add_argument('--encoder', type=str, default='sage', choices=['gcn', 'gin', 'sage', 'infomax', 'jk'])
 parser.add_argument('--batch_size', type=int, help='batch size', default=100)
+parser.add_argument('--evaluate_batch_size', type=int, help='evaluate batch size', default=10)
 parser.add_argument('--subgraph_size', type=int, help='subgraph size', default=30)
 parser.add_argument('--n_order', type=int, help='order of neighbor nodes', default=10)
 parser.add_argument('--hidden_size', type=int, help='hidden size', default=1024)
@@ -144,10 +145,10 @@ def get_all_node_emb(model, mask, subgraph, num_node):
     node_list = np.arange(0, num_node, 1)[mask]
     list_size = node_list.size
     z = torch.Tensor(list_size, args.hidden_size).cuda()
-    group_nb = math.ceil(list_size / args.batch_size)  # num of batches
+    group_nb = math.ceil(list_size / args.evaluate_batch_size)  # num of batches
     for i in range(group_nb):
-        maxx = min(list_size, (i + 1) * args.batch_size)
-        minn = i * args.batch_size
+        maxx = min(list_size, (i + 1) * args.evaluate_batch_size)
+        minn = i * args.evaluate_batch_size
         batch, index = subgraph.search(node_list[minn:maxx])
 
         # node = model(batch.x.cpu(), batch.edge_index.cpu(), batch.batch.cpu(), index.cpu())
@@ -174,7 +175,7 @@ def get_all_node_pred(model, mask, subgraph, num_node):
     return y_pred
 
 
-def evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_select, type='easy'):
+def evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_select, type='all'):
     loss_result = compute_loss(model, subgraph, cf_subgraph_list, labels, idx_select)
     if type == 'easy':
         eval_results = {'loss': loss_result['loss'], 'loss_c': loss_result['loss_c'], 'loss_s': loss_result['loss_s']}
@@ -377,7 +378,7 @@ def test(model, adj, data, dataset, subgraph, cf_subgraph_pred_list, labels, sen
          idx_select):
     #
     model.eval()
-    eval_results_orin = evaluate(model, data, subgraph, cf_subgraph_pred_list, labels, sens, idx_select)
+    eval_results_orin = evaluate(model, data, subgraph, cf_subgraph_pred_list, labels, sens, idx_select, type='all')
 
     n = len(labels)
     idx_select_mask = (torch.zeros(n).scatter_(0, idx_select, 1) > 0)  # size = n, bool
