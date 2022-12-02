@@ -98,11 +98,8 @@ class CFDA(nn.Module):
             idx_1 = adj.to_dense().reshape(-1) == 1
             weight[idx_1] = weights_1
 
-            loss_bce = nn.BCELoss(weight=weight, reduction='mean').to('cpu')
-            loss_reconst_a = loss_bce(A_pred.reshape(-1).cpu(), adj.to_dense().reshape(-1).cpu())
-            A_pred.cuda()
-            adj.cuda()
-            loss_reconst_a.cuda()
+            loss_bce = nn.BCELoss(weight=weight, reduction='mean')
+            loss_reconst_a = loss_bce(A_pred.reshape(-1), adj.to_dense().reshape(-1))
 
         else:
             loss_bce = nn.BCELoss(reduction='mean')
