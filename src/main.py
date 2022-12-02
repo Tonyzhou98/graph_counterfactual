@@ -3,6 +3,7 @@ Graph fairness
 '''
 
 import time
+import gc
 import argparse
 import numpy as np
 import random
@@ -699,6 +700,10 @@ if __name__ == '__main__':
                 print(k, ": ", eval_results[k])
             else:
                 print(k, f": {eval_results[k]:.4f}")
+
+        # empty the cache to free memory
+        gc.collect()
+        torch.cuda.empty_cache()
 
     print('============================= Overall =============================================')
     for k in results_all_exp:
