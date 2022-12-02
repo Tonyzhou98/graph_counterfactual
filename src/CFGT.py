@@ -5,7 +5,6 @@ import os
 import numpy as np
 from torch import optim
 
-
 class CFGT(nn.Module):
     def __init__(self, h_dim, input_dim, adj):
         super(CFGT, self).__init__()
@@ -27,12 +26,12 @@ class CFGT(nn.Module):
 
     def pred_adj(self, Z, S):
         A_pred = self.pred_a(Z)  # n x n
-        S_rep_f = self.sf(S).cpu()
-        S_rep_cf = self.sf(1 - S).cpu()
+        S_rep_f = self.sf(S)
+        S_rep_cf = self.sf(1 - S)
 
         s_match = (torch.matmul(S_rep_f, S_rep_f.t()) + torch.matmul(S_rep_cf, S_rep_cf.t())) / 2
-        A_pred = F.sigmoid(A_pred.cpu() + s_match)
-        return A_pred.cuda()
+        A_pred = F.sigmoid(A_pred + s_match)
+        return A_pred
 
     def encode(self, X):
         Z_a = self.encode_A(X)
@@ -64,13 +63,13 @@ class CFGT(nn.Module):
             idx_1 = adj.to_dense().reshape(-1) == 1
             weight[idx_1] = weights_1
 
-            loss_bce = nn.BCELoss(weight=weight, reduction='mean').to('cpu')
-            loss_reconst_a = loss_bce(A_pred.reshape(-1).cpu(), adj.to_dense().reshape(-1).cpu())
+            loss_bce = nn.BCELoss(weight=weight, reduction='mean')
+            loss_reconst_a = loss_bce(A_pred.reshape(-1), adj.to_dense().reshape(-1))
         else:
             loss_bce = nn.BCELoss(reduction='mean')
             loss_reconst_a = loss_bce(A_pred.reshape(-1), adj.to_dense().reshape(-1))
 
-        loss_result = {'loss_reconst_a': loss_reconst_a.cuda()}
+        loss_result = {'loss_reconst_a': loss_reconst_a}
         return loss_result
 
     def train_model(self, X, adj, sen_idx, dataset, model_path='', lr=0.0001, weight_decay=1e-5):
@@ -133,9 +132,8 @@ class CFGT(nn.Module):
         eval_result['acc_a_pred_1'] = acc_a_pred_1
         return eval_result
 
-
 class GraphConvSparse(nn.Module):
-    def __init__(self, input_dim, output_dim, adj, activation=F.relu, **kwargs):
+    def __init__(self, input_dim, output_dim, adj, activation = F.relu, **kwargs):
         super(GraphConvSparse, self).__init__(**kwargs)
         self.weight = glorot_init(input_dim, output_dim)
         self.adj = adj
@@ -143,20 +141,19 @@ class GraphConvSparse(nn.Module):
 
     def forward(self, inputs):
         x = inputs
-        x = torch.mm(x, self.weight)
+        x = torch.mm(x,self.weight)
         x = torch.mm(self.adj, x)
         outputs = self.activation(x)
         return outputs
 
 
 def glorot_init(input_dim, output_dim):
-    init_range = np.sqrt(6.0 / (input_dim + output_dim))
-    initial = torch.rand(input_dim, output_dim) * 2 * init_range - init_range
+    init_range = np.sqrt(6.0/(input_dim + output_dim))
+    initial = torch.rand(input_dim, output_dim)*2*init_range - init_range
     return nn.Parameter(initial)
-
 
 def sparse_dense_mul(s, d):
     i = s._indices()
     v = s._values()
-    dv = d[i[0, :], i[1, :]]  # get values from relevant entries of dense matrix
+    dv = d[i[0,:], i[1,:]]  # get values from relevant entries of dense matrix
     return torch.sparse.FloatTensor(i, v * dv, s.size())
