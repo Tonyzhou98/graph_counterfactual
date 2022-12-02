@@ -93,7 +93,8 @@ class CFGT(nn.Module):
             loss_reconst_a = loss_result['loss_reconst_a']
             loss_reconst_a.backward()
             optimizer.step()
-            print(epoch)
+            if epoch % 10 == 0:
+                print(epoch)
 
             if epoch % 100 == 0:
                 self.eval()
