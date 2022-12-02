@@ -27,11 +27,11 @@ class CFGT(nn.Module):
 
     def pred_adj(self, Z, S):
         A_pred = self.pred_a(Z)  # n x n
-        S_rep_f = self.sf(S)
-        S_rep_cf = self.sf(1 - S)
+        S_rep_f = self.sf(S).cpu()
+        S_rep_cf = self.sf(1 - S).cpu()
 
         s_match = (torch.matmul(S_rep_f, S_rep_f.t()) + torch.matmul(S_rep_cf, S_rep_cf.t())) / 2
-        A_pred = F.sigmoid(A_pred + s_match)
+        A_pred = F.sigmoid(A_pred + s_match.cuda())
         return A_pred
 
     def encode(self, X):
