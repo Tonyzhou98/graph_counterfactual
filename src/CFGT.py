@@ -94,7 +94,7 @@ class CFGT(nn.Module):
             loss_reconst_a.backward()
             optimizer.step()
 
-            if epoch % 100 == 0:
+            if epoch % 10 == 0:
                 self.eval()
                 eval_result = self.test(X, adj, sen_idx)
                 print('Epoch: {:04d}'.format(epoch + 1),
