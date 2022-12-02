@@ -14,7 +14,7 @@ Datasets can be found in ```../dataset/```
 ### Learning node representation
 First run
 ```
-python main.py --experiment_type train
+python main.py --experiment_type cf
 ```
 make directory ```./models_save/``` if you don't.
 
