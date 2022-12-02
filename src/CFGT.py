@@ -4,6 +4,10 @@ import torch.nn.functional as F
 import os
 import numpy as np
 from torch import optim
+from torch.cuda.amp import GradScaler, autocast
+
+scaler = GradScaler()
+
 
 class CFGT(nn.Module):
     def __init__(self, h_dim, input_dim, adj):
@@ -85,13 +89,15 @@ class CFGT(nn.Module):
         for epoch in range(2000):
             optimizer.zero_grad()
 
-            A_pred = self.forward(X, sen_idx)
-            loss_result = self.loss_function(adj, A_pred)
+            with autocast():
+                A_pred = self.forward(X, sen_idx)
+                loss_result = self.loss_function(adj, A_pred)
+                loss_reconst_a = loss_result['loss_reconst_a']
 
             # backward propagation
-            loss_reconst_a = loss_result['loss_reconst_a']
-            loss_reconst_a.backward()
-            optimizer.step()
+            scaler.scale(loss_reconst_a).backward()
+            scaler.step(optimizer.step())
+            scaler.update()
 
             if epoch % 100 == 0:
                 self.eval()
@@ -132,8 +138,9 @@ class CFGT(nn.Module):
         eval_result['acc_a_pred_1'] = acc_a_pred_1
         return eval_result
 
+
 class GraphConvSparse(nn.Module):
-    def __init__(self, input_dim, output_dim, adj, activation = F.relu, **kwargs):
+    def __init__(self, input_dim, output_dim, adj, activation=F.relu, **kwargs):
         super(GraphConvSparse, self).__init__(**kwargs)
         self.weight = glorot_init(input_dim, output_dim)
         self.adj = adj
@@ -141,19 +148,20 @@ class GraphConvSparse(nn.Module):
 
     def forward(self, inputs):
         x = inputs
-        x = torch.mm(x,self.weight)
+        x = torch.mm(x, self.weight)
         x = torch.mm(self.adj, x)
         outputs = self.activation(x)
         return outputs
 
 
 def glorot_init(input_dim, output_dim):
-    init_range = np.sqrt(6.0/(input_dim + output_dim))
-    initial = torch.rand(input_dim, output_dim)*2*init_range - init_range
+    init_range = np.sqrt(6.0 / (input_dim + output_dim))
+    initial = torch.rand(input_dim, output_dim) * 2 * init_range - init_range
     return nn.Parameter(initial)
+
 
 def sparse_dense_mul(s, d):
     i = s._indices()
     v = s._values()
-    dv = d[i[0,:], i[1,:]]  # get values from relevant entries of dense matrix
+    dv = d[i[0, :], i[1, :]]  # get values from relevant entries of dense matrix
     return torch.sparse.FloatTensor(i, v * dv, s.size())
