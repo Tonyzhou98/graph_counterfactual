@@ -66,6 +66,7 @@ class CFGT(nn.Module):
 
             loss_bce = nn.BCELoss(weight=weight, reduction='mean').to('cpu')
             loss_reconst_a = loss_bce(A_pred.reshape(-1).cpu(), adj.to_dense().reshape(-1).cpu())
+            A_pred.cuda()
             adj.cuda()
             loss_reconst_a.cuda()
         else:
