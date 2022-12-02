@@ -150,15 +150,8 @@ def get_all_node_emb(model, mask, subgraph, num_node):
         minn = i * args.batch_size
         batch, index = subgraph.search(node_list[minn:maxx])
 
-        model.to("cpu")
-        node = model(batch.x.cpu(), batch.edge_index.cpu(), batch.batch.cpu(), index.cpu())
-        # node = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(), index.cuda())
-
-        batch.x.cuda()
-        batch.edge_index.cuda()
-        batch.batch.cuda()
-        index.cuda()
-        model = model.to("cuda")
+        # node = model(batch.x.cpu(), batch.edge_index.cpu(), batch.batch.cpu(), index.cpu())
+        node = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(), index.cuda())
         z[minn:maxx] = node.cuda()
 
     return z
