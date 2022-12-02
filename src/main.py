@@ -581,7 +581,7 @@ if __name__ == '__main__':
         cf_subgraph_list.append(cf_subgraph)
 
         # add more augmentation if wanted
-        subgraph_load = True
+        subgraph_load = False
         sens_rate_list = [0.0, 1.0]
         for si in range(len(sens_rate_list)):
             sens_rate = sens_rate_list[si]
