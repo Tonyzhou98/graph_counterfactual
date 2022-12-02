@@ -65,7 +65,7 @@ class CFGT(nn.Module):
             weight[idx_1] = weights_1
 
             loss_bce = nn.BCELoss(weight=weight, reduction='mean')
-            loss_reconst_a = loss_bce(A_pred.reshape(-1).half(), adj.to_dense().reshape(-1).half())
+            loss_reconst_a = loss_bce(A_pred.reshape(-1).half(), adj.to_dense().reshape(-1))
         else:
             loss_bce = nn.BCELoss(reduction='mean')
             loss_reconst_a = loss_bce(A_pred.reshape(-1), adj.to_dense().reshape(-1))
@@ -96,7 +96,7 @@ class CFGT(nn.Module):
 
             if epoch % 10 == 0:
                 self.eval()
-                eval_result = self.test(X, adj.float(), sen_idx)
+                eval_result = self.test(X, adj, sen_idx)
                 print('Epoch: {:04d}'.format(epoch + 1),
                       'loss_reconst_a: {:.4f}'.format(loss_reconst_a.item()),
                       'acc_a_pred: {:.4f}'.format(eval_result['acc_a_pred'].item()),
