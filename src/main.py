@@ -560,7 +560,7 @@ if __name__ == '__main__':
 
         # counterfactual graph generation (may not true)
         cf_subgraph_list = []
-        subgraph_load = True
+        subgraph_load = False
         if subgraph_load:
             path_cf_ag = 'graphFair_subgraph/aug/' + f'{args.dataset}_cf_aug_' + str(0) + '.pkl'
             with open(path_cf_ag, 'rb') as f:
