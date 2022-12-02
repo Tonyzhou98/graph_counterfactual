@@ -174,7 +174,7 @@ def get_all_node_pred(model, mask, subgraph, num_node):
     return y_pred
 
 
-def evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_select, type='all'):
+def evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_select, type='easy'):
     loss_result = compute_loss(model, subgraph, cf_subgraph_list, labels, idx_select)
     if type == 'easy':
         eval_results = {'loss': loss_result['loss'], 'loss_c': loss_result['loss_c'], 'loss_s': loss_result['loss_s']}
