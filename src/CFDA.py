@@ -163,9 +163,6 @@ class CFDA(nn.Module):
                 (-loss_s + loss_reconst_a + loss_reconst_x).backward()
                 optimizer_2.step()
 
-            if epoch % 10 == 0:
-                print(epoch)
-
             if epoch % 100 == 0:
                 self.eval()
                 eval_result = self.test(adj, X, sen_idx, S_agg_cat)
