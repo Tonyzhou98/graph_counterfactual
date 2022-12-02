@@ -105,7 +105,8 @@ def pre_analysis(adj, labels, sens):
     return
 
 
-def generate_cf_true(data, dataset, sens_rate_list, sens_idx, save_path, save_file=True, raw_data_info=None, mode=1):
+def generate_cf_true(data, dataset, sens_rate_list, sens_idx, save_path, save_file=True, raw_data_info=None, mode=1,
+                     train='test'):
     n = data.x.shape[0]
     if dataset == 'synthetic':
         generate_cf_true_synthetic(data, dataset, sens_rate_list, sens_idx, save_path, save_file=save_file,
@@ -113,7 +114,7 @@ def generate_cf_true(data, dataset, sens_rate_list, sens_idx, save_path, save_fi
         return
     else:
         generate_cf_true_rw(data, dataset, sens_rate_list, sens_idx, save_path, save_file=save_file,
-                            raw_data_info=raw_data_info, train='train')
+                            raw_data_info=raw_data_info, train=train)
 
     return
 
