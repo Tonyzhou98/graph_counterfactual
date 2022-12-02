@@ -158,8 +158,9 @@ def get_all_node_emb(model, mask, subgraph, num_node):
         batch.edge_index.cuda()
         batch.batch.cuda()
         index.cuda()
-        model = model.to("gpu")
+        model = model.to("cuda")
         z[minn:maxx] = node.cuda()
+
     return z
 
 
