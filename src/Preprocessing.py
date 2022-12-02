@@ -23,6 +23,7 @@ from CFGT import CFGT
 # set device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+
 def stats_cov(data1, data2):
     '''
     :param data1: np, d_1 x n
@@ -39,6 +40,7 @@ def stats_cov(data1, data2):
         'pear_p_value': p_value
     }
     return result
+
 
 def pre_analysis(adj, labels, sens):
     '''
@@ -58,7 +60,7 @@ def pre_analysis(adj, labels, sens):
     else:
         print("not symmetric!")
     adj_degree = adj.sum(axis=1)
-    ave_degree = adj_degree.sum()/len(adj_degree)
+    ave_degree = adj_degree.sum() / len(adj_degree)
     print('averaged degree: ', ave_degree, ' max degree: ', adj_degree.max(), ' min degree: ', adj_degree.min())
 
     # inter- and intra- connections
@@ -77,8 +79,8 @@ def pre_analysis(adj, labels, sens):
     nb_sens_ave = adj_noself @ sens  # n x 1, average sens of 1-hop neighbors
 
     # Y_i, S_i
-    #pyplot.scatter(labels, sens)
-    #pyplot.show()
+    # pyplot.scatter(labels, sens)
+    # pyplot.show()
 
     cov_results = stats_cov(labels, sens)
     print('correlation between Y and S:', cov_results)
@@ -102,16 +104,18 @@ def pre_analysis(adj, labels, sens):
 
     return
 
+
 def generate_cf_true(data, dataset, sens_rate_list, sens_idx, save_path, save_file=True, raw_data_info=None, mode=1):
     n = data.x.shape[0]
     if dataset == 'synthetic':
-        generate_cf_true_synthetic(data, dataset, sens_rate_list, sens_idx, save_path, save_file=save_file, raw_data_info=raw_data_info)
+        generate_cf_true_synthetic(data, dataset, sens_rate_list, sens_idx, save_path, save_file=save_file,
+                                   raw_data_info=raw_data_info)
         return
     else:
-        generate_cf_true_rw(data, dataset, sens_rate_list, sens_idx, save_path, save_file=save_file, raw_data_info=raw_data_info)
+        generate_cf_true_rw(data, dataset, sens_rate_list, sens_idx, save_path, save_file=save_file,
+                            raw_data_info=raw_data_info)
 
     return
-
 
 
 # Load data
@@ -152,9 +156,9 @@ def load_data(path_root, dataset):
         label_number = 100
         path_bail = path_root + "./dataset/bail"
         adj, features, labels, idx_train, idx_val, idx_test, sens = load_bail(dataset, sens_attr,
-                                                                                predict_attr, path=path_bail,
-                                                                                label_number=label_number,
-                                                                                )
+                                                                              predict_attr, path=path_bail,
+                                                                              label_number=label_number,
+                                                                              )
         norm_features = feature_norm(features)
         norm_features[:, sens_idx] = features[:, sens_idx]
         features = norm_features
@@ -163,19 +167,20 @@ def load_data(path_root, dataset):
         label_number = 1000
         path_sythetic = path_root + './dataset/synthetic.mat'
         adj, features, labels, idx_train, idx_val, idx_test, sens, raw_data_info = load_synthetic(path=path_sythetic,
-                                                                              label_number=label_number)
+                                                                                                  label_number=label_number)
     else:
         print('Invalid dataset name!!')
         exit(0)
 
     print("loaded dataset: ", dataset, "num of node: ", len(features), ' feature dim: ', features.shape[1])
 
-    num_class = labels.unique().shape[0]-1
+    num_class = labels.unique().shape[0] - 1
     return adj, features, labels, idx_train, idx_val, idx_test, sens, sens_idx, raw_data_info
 
 
 # get true cf for real-world datasets
-def generate_cf_true_rw(data, dataset, sens_rate_list, sens_idx, save_path, save_file=True, train='test', raw_data_info=None):
+def generate_cf_true_rw(data, dataset, sens_rate_list, sens_idx, save_path, save_file=True, train='test',
+                        raw_data_info=None):
     n = data.x.shape[0]
     input_dim = data.x.shape[1]
     h_dim = 32
@@ -202,7 +207,7 @@ def generate_cf_true_rw(data, dataset, sens_rate_list, sens_idx, save_path, save
         x_mean_0 = data.x[idx_0, :]
         x_mean_diff = x_mean_1.mean(dim=0) - x_mean_0.mean(dim=0)  # d
         x_update = ((sens_new - sens).view(-1, 1).tile(1, x_mean_1.shape[1]) * x_mean_diff.view(1, -1).tile(n, 1))
-        data_cf.x = w_hd_x * data.x + (1-w_hd_x) * x_update
+        data_cf.x = w_hd_x * data.x + (1 - w_hd_x) * x_update
 
         # S
         data_cf.x[:, sens_idx] = sens_new
@@ -222,7 +227,8 @@ def generate_cf_true_rw(data, dataset, sens_rate_list, sens_idx, save_path, save
                     'acc_a_pred_1: {:.4f}'.format(eval_result['acc_a_pred_1'].item()),
                 )
         else:
-            model_GT.train_model(data.x.cuda(), adj.cuda(), sens_idx, dataset, model_path=save_path, lr=0.0001, weight_decay=1e-5)
+            model_GT.train_model(data.x.cuda(), adj.cuda(), sens_idx, dataset, model_path=save_path, lr=0.0001,
+                                 weight_decay=1e-5)
 
         # generate cf for whole graph to achieve better efficiency
         Z_a = model_GT.encode(data_cf.x.cuda())
@@ -247,6 +253,7 @@ def generate_cf_true_rw(data, dataset, sens_rate_list, sens_idx, save_path, save
                 print('saved counterfactual data: ', dataset + '_cf_' + str(sens_rate) + '.pkl')
 
     return
+
 
 def generate_cf_true_synthetic(data, dataset, sens_rate_list, sens_idx, save_path, save_file=True, raw_data_info=None):
     # generate graphs in sens_rate_list
@@ -316,6 +323,7 @@ def generate_cf_true_synthetic(data, dataset, sens_rate_list, sens_idx, save_pat
                 print('saved counterfactual data: ', dataset + '_cf_' + str(sens_rate) + '.pkl')
     return
 
+
 def generate_synthetic_data(path):
     n = 2000
     z_dim = 50
@@ -326,7 +334,7 @@ def generate_synthetic_data(path):
     embedding = np.random.normal(loc=0, scale=1, size=(n, z_dim))
     feat_idxs = random.sample(range(z_dim), dim)
     v = np.random.normal(0, 1, size=(1, dim))
-    features = embedding[:, feat_idxs] + (np.dot(sens.reshape(-1,1), v))  # (n x dim) + (1 x dim) -> n x dim
+    features = embedding[:, feat_idxs] + (np.dot(sens.reshape(-1, 1), v))  # (n x dim) + (1 x dim) -> n x dim
 
     adj = np.zeros((n, n))
     sens_sim = np.zeros((n, n))
@@ -354,9 +362,9 @@ def generate_synthetic_data(path):
     nb_sens_ave = adj_norm @ sens  # n x 1, average sens of 1-hop neighbors
 
     dd = np.matmul(embedding, w)
-    d2 = nb_sens_ave.reshape(-1,1)
+    d2 = nb_sens_ave.reshape(-1, 1)
     print('y component: ', np.mean(dd), np.mean(d2))
-    labels = np.matmul(embedding, w) + w_s * nb_sens_ave.reshape(-1,1) # n x 1
+    labels = np.matmul(embedding, w) + w_s * nb_sens_ave.reshape(-1, 1)  # n x 1
     labels = labels.reshape(-1)
     labels_mean = np.mean(labels)
     labels_binary = np.zeros_like(labels)
@@ -373,8 +381,9 @@ def generate_synthetic_data(path):
     print('data saved in ', path)
     return data
 
+
 if __name__ == '__main__':
     dataset = 'credit'
     path_root = './nifty-main/'
-    path = path_root+'synthetic.mat'
+    path = path_root + 'synthetic.mat'
     generate_synthetic_data(path)

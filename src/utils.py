@@ -1,5 +1,5 @@
 import os
-#import dgl
+# import dgl
 import torch
 import random
 import numpy as np
@@ -7,6 +7,7 @@ import pandas as pd
 import scipy.sparse as sp
 from scipy.spatial import distance_matrix
 import scipy.io as scio
+
 
 def encode_onehot(labels):
     classes = set(labels)
@@ -23,7 +24,7 @@ def build_relationship(x, thresh=0.25):
     idx_map = []
     for ind in range(df_euclid.shape[0]):
         max_sim = np.sort(df_euclid[ind, :])[-2]
-        neig_id = np.where(df_euclid[ind, :] > thresh*max_sim)[0]
+        neig_id = np.where(df_euclid[ind, :] > thresh * max_sim)[0]
         import random
         random.seed(912)
         random.shuffle(neig_id)
@@ -31,31 +32,33 @@ def build_relationship(x, thresh=0.25):
             if neig != ind:
                 idx_map.append([ind, neig])
     # print('building edge relationship complete')
-    idx_map =  np.array(idx_map)
-    
+    idx_map = np.array(idx_map)
+
     return idx_map
 
-def load_credit(dataset, sens_attr="Age", predict_attr="NoDefaultNextMonth", path="./dataset/credit/", label_number=1000):
+
+def load_credit(dataset, sens_attr="Age", predict_attr="NoDefaultNextMonth", path="./dataset/credit/",
+                label_number=1000):
     # print('Loading {} dataset from {}'.format(dataset, path))
-    idx_features_labels = pd.read_csv(os.path.join(path,"{}.csv".format(dataset)))
+    idx_features_labels = pd.read_csv(os.path.join(path, "{}.csv".format(dataset)))
     header = list(idx_features_labels.columns)
     header.remove(predict_attr)
     header.remove('Single')
 
-#    # Normalize MaxBillAmountOverLast6Months
-#    idx_features_labels['MaxBillAmountOverLast6Months'] = (idx_features_labels['MaxBillAmountOverLast6Months']-idx_features_labels['MaxBillAmountOverLast6Months'].mean())/idx_features_labels['MaxBillAmountOverLast6Months'].std()
-#
-#    # Normalize MaxPaymentAmountOverLast6Months
-#    idx_features_labels['MaxPaymentAmountOverLast6Months'] = (idx_features_labels['MaxPaymentAmountOverLast6Months'] - idx_features_labels['MaxPaymentAmountOverLast6Months'].mean())/idx_features_labels['MaxPaymentAmountOverLast6Months'].std()
-#
-#    # Normalize MostRecentBillAmount
-#    idx_features_labels['MostRecentBillAmount'] = (idx_features_labels['MostRecentBillAmount']-idx_features_labels['MostRecentBillAmount'].mean())/idx_features_labels['MostRecentBillAmount'].std()
-#
-#    # Normalize MostRecentPaymentAmount
-#    idx_features_labels['MostRecentPaymentAmount'] = (idx_features_labels['MostRecentPaymentAmount']-idx_features_labels['MostRecentPaymentAmount'].mean())/idx_features_labels['MostRecentPaymentAmount'].std()
-#
-#    # Normalize TotalMonthsOverdue
-#    idx_features_labels['TotalMonthsOverdue'] = (idx_features_labels['TotalMonthsOverdue']-idx_features_labels['TotalMonthsOverdue'].mean())/idx_features_labels['TotalMonthsOverdue'].std()
+    #    # Normalize MaxBillAmountOverLast6Months
+    #    idx_features_labels['MaxBillAmountOverLast6Months'] = (idx_features_labels['MaxBillAmountOverLast6Months']-idx_features_labels['MaxBillAmountOverLast6Months'].mean())/idx_features_labels['MaxBillAmountOverLast6Months'].std()
+    #
+    #    # Normalize MaxPaymentAmountOverLast6Months
+    #    idx_features_labels['MaxPaymentAmountOverLast6Months'] = (idx_features_labels['MaxPaymentAmountOverLast6Months'] - idx_features_labels['MaxPaymentAmountOverLast6Months'].mean())/idx_features_labels['MaxPaymentAmountOverLast6Months'].std()
+    #
+    #    # Normalize MostRecentBillAmount
+    #    idx_features_labels['MostRecentBillAmount'] = (idx_features_labels['MostRecentBillAmount']-idx_features_labels['MostRecentBillAmount'].mean())/idx_features_labels['MostRecentBillAmount'].std()
+    #
+    #    # Normalize MostRecentPaymentAmount
+    #    idx_features_labels['MostRecentPaymentAmount'] = (idx_features_labels['MostRecentPaymentAmount']-idx_features_labels['MostRecentPaymentAmount'].mean())/idx_features_labels['MostRecentPaymentAmount'].std()
+    #
+    #    # Normalize TotalMonthsOverdue
+    #    idx_features_labels['TotalMonthsOverdue'] = (idx_features_labels['TotalMonthsOverdue']-idx_features_labels['TotalMonthsOverdue'].mean())/idx_features_labels['TotalMonthsOverdue'].std()
 
     # build relationship
     if os.path.exists(f'{path}/{dataset}_edges.txt'):
@@ -83,8 +86,8 @@ def load_credit(dataset, sens_attr="Age", predict_attr="NoDefaultNextMonth", pat
 
     import random
     random.seed(20)
-    label_idx_0 = np.where(labels==0)[0]
-    label_idx_1 = np.where(labels==1)[0]
+    label_idx_0 = np.where(labels == 0)[0]
+    label_idx_1 = np.where(labels == 1)[0]
 
     idx_train_list = []
     idx_val_list = []
@@ -115,7 +118,7 @@ def load_credit(dataset, sens_attr="Age", predict_attr="NoDefaultNextMonth", pat
 
 def load_bail(dataset, sens_attr="WHITE", predict_attr="RECID", path="../dataset/bail/", label_number=1000):
     # print('Loading {} dataset from {}'.format(dataset, path))
-    idx_features_labels = pd.read_csv(os.path.join(path,"{}.csv".format(dataset)))
+    idx_features_labels = pd.read_csv(os.path.join(path, "{}.csv".format(dataset)))
     header = list(idx_features_labels.columns)
     header.remove(predict_attr)
 
@@ -148,8 +151,8 @@ def load_bail(dataset, sens_attr="WHITE", predict_attr="RECID", path="../dataset
 
     import random
     random.seed(20)
-    label_idx_0 = np.where(labels==0)[0]
-    label_idx_1 = np.where(labels==1)[0]
+    label_idx_0 = np.where(labels == 0)[0]
+    label_idx_1 = np.where(labels == 1)[0]
 
     idx_train_list = []
     idx_val_list = []
@@ -173,8 +176,9 @@ def load_bail(dataset, sens_attr="WHITE", predict_attr="RECID", path="../dataset
 
     sens = idx_features_labels[sens_attr].values.astype(int)
     sens = torch.FloatTensor(sens)
-    
+
     return adj, features, labels, idx_train_list, idx_val_list, idx_test_list, sens
+
 
 def load_synthetic(path, label_number=1000):
     data = scio.loadmat(path)
@@ -182,7 +186,7 @@ def load_synthetic(path, label_number=1000):
     adj = data['adj']
     labels = data['labels'][0]
     sens = data['sens'][0]
-    features = np.concatenate([sens.reshape(-1,1), features], axis=1)
+    features = np.concatenate([sens.reshape(-1, 1), features], axis=1)
     raw_data_info = {}
     raw_data_info['adj'] = adj
     raw_data_info['w'] = data['w']
@@ -227,7 +231,7 @@ def load_synthetic(path, label_number=1000):
 
 def load_german(dataset, sens_attr="Gender", predict_attr="GoodCustomer", path="../dataset/german/", label_number=1000):
     # print('Loading {} dataset from {}'.format(dataset, path))
-    idx_features_labels = pd.read_csv(os.path.join(path,"{}.csv".format(dataset)))
+    idx_features_labels = pd.read_csv(os.path.join(path, "{}.csv".format(dataset)))
     header = list(idx_features_labels.columns)
     header.remove(predict_attr)
     header.remove('OtherLoansAtStore')
@@ -237,19 +241,19 @@ def load_german(dataset, sens_attr="Gender", predict_attr="GoodCustomer", path="
     idx_features_labels['Gender'][idx_features_labels['Gender'] == 'Female'] = 1
     idx_features_labels['Gender'][idx_features_labels['Gender'] == 'Male'] = 0
 
-#    for i in range(idx_features_labels['PurposeOfLoan'].unique().shape[0]):
-#        val = idx_features_labels['PurposeOfLoan'].unique()[i]
-#        idx_features_labels['PurposeOfLoan'][idx_features_labels['PurposeOfLoan'] == val] = i
+    #    for i in range(idx_features_labels['PurposeOfLoan'].unique().shape[0]):
+    #        val = idx_features_labels['PurposeOfLoan'].unique()[i]
+    #        idx_features_labels['PurposeOfLoan'][idx_features_labels['PurposeOfLoan'] == val] = i
 
-#    # Normalize LoanAmount
-#    idx_features_labels['LoanAmount'] = 2*(idx_features_labels['LoanAmount']-idx_features_labels['LoanAmount'].min()).div(idx_features_labels['LoanAmount'].max() - idx_features_labels['LoanAmount'].min()) - 1
-#
-#    # Normalize Age
-#    idx_features_labels['Age'] = 2*(idx_features_labels['Age']-idx_features_labels['Age'].min()).div(idx_features_labels['Age'].max() - idx_features_labels['Age'].min()) - 1
-#
-#    # Normalize LoanDuration
-#    idx_features_labels['LoanDuration'] = 2*(idx_features_labels['LoanDuration']-idx_features_labels['LoanDuration'].min()).div(idx_features_labels['LoanDuration'].max() - idx_features_labels['LoanDuration'].min()) - 1
-#
+    #    # Normalize LoanAmount
+    #    idx_features_labels['LoanAmount'] = 2*(idx_features_labels['LoanAmount']-idx_features_labels['LoanAmount'].min()).div(idx_features_labels['LoanAmount'].max() - idx_features_labels['LoanAmount'].min()) - 1
+    #
+    #    # Normalize Age
+    #    idx_features_labels['Age'] = 2*(idx_features_labels['Age']-idx_features_labels['Age'].min()).div(idx_features_labels['Age'].max() - idx_features_labels['Age'].min()) - 1
+    #
+    #    # Normalize LoanDuration
+    #    idx_features_labels['LoanDuration'] = 2*(idx_features_labels['LoanDuration']-idx_features_labels['LoanDuration'].min()).div(idx_features_labels['LoanDuration'].max() - idx_features_labels['LoanDuration'].min()) - 1
+    #
     # build relationship
     if os.path.exists(f'{path}/{dataset}_edges.txt'):
         edges_unordered = np.genfromtxt(f'{path}/{dataset}_edges.txt').astype('int')
@@ -278,8 +282,8 @@ def load_german(dataset, sens_attr="Gender", predict_attr="GoodCustomer", path="
 
     import random
     random.seed(20)
-    label_idx_0 = np.where(labels==0)[0]
-    label_idx_1 = np.where(labels==1)[0]
+    label_idx_0 = np.where(labels == 0)[0]
+    label_idx_1 = np.where(labels == 1)[0]
 
     idx_train_list = []
     idx_val_list = []
@@ -304,8 +308,9 @@ def load_german(dataset, sens_attr="Gender", predict_attr="GoodCustomer", path="
 
     sens = idx_features_labels[sens_attr].values.astype(int)
     sens = torch.FloatTensor(sens)
-   
+
     return adj, features, labels, idx_train_list, idx_val_list, idx_test_list, sens
+
 
 def normalize(mx):
     """Row-normalize sparse matrix"""
@@ -316,23 +321,27 @@ def normalize(mx):
     mx = r_mat_inv.dot(mx)
     return mx
 
+
 def feature_norm(features):
     min_values = features.min(axis=0)[0]
     max_values = features.max(axis=0)[0]
-    return 2*(features - min_values).div(max_values-min_values) - 1
+    return 2 * (features - min_values).div(max_values - min_values) - 1
+
 
 def accuracy(output, labels):
     output = output.squeeze()
-    preds = (output>0).type_as(labels)
+    preds = (output > 0).type_as(labels)
     correct = preds.eq(labels).double()
     correct = correct.sum()
     return correct / len(labels)
+
 
 def accuracy_softmax(output, labels):
     preds = output.max(1)[1].type_as(labels)
     correct = preds.eq(labels).double()
     correct = correct.sum()
     return correct / len(labels)
+
 
 def sparse_mx_to_torch_sparse_tensor(sparse_mx):
     """Convert a scipy sparse matrix to a torch sparse tensor."""
