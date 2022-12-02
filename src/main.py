@@ -56,7 +56,7 @@ parser.add_argument('--sim_coeff', type=float, default=0.6,
 parser.add_argument('--dataset', type=str, default='synthetic',
                     choices=['synthetic', 'bail', 'credit'])
 parser.add_argument('--encoder', type=str, default='sage', choices=['gcn', 'gin', 'sage', 'infomax', 'jk'])
-parser.add_argument('--batch_size', type=int, help='batch size', default=50)
+parser.add_argument('--batch_size', type=int, help='batch size', default=100)
 parser.add_argument('--subgraph_size', type=int, help='subgraph size', default=30)
 parser.add_argument('--n_order', type=int, help='order of neighbor nodes', default=10)
 parser.add_argument('--hidden_size', type=int, help='hidden size', default=1024)
@@ -343,12 +343,12 @@ def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_l
         # eval_results_tst = evaluate(model, data, subgraph, cf_subgraph, labels, sens, idx_test)
         if epoch % 100 == 0:
             model.eval()
-            eval_results_trn = evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_train)
+            # eval_results_trn = evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_train)
             eval_results_val = evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_val)
             print(f"[Train] Epoch {epoch}:train_s_loss: {(sim_loss / rep):.4f} | train_c_loss: {cl_loss:.4f} | "
-                  f"trn_loss: {eval_results_trn['loss']:.4f} |"
-                  f"trn_acc: {eval_results_trn['acc']:.4f} | trn_auc_roc: {eval_results_trn['auc']:.4f} | trn_F1: {eval_results_trn['f1']:.4f} | "
-                  f"trn_Parity: {eval_results_trn['parity']:.4f} | trn_Equality: {eval_results_trn['equality']:.4f} | trn_CounterFactual Fairness: {eval_results_trn['cf']:.4f} |"
+                  # f"trn_loss: {eval_results_trn['loss']:.4f} |"
+                  # f"trn_acc: {eval_results_trn['acc']:.4f} | trn_auc_roc: {eval_results_trn['auc']:.4f} | trn_F1: {eval_results_trn['f1']:.4f} | "
+                  # f"trn_Parity: {eval_results_trn['parity']:.4f} | trn_Equality: {eval_results_trn['equality']:.4f} | trn_CounterFactual Fairness: {eval_results_trn['cf']:.4f} |"
                   f"val_loss: {eval_results_val['loss']:.4f} |"
                   f"val_acc: {eval_results_val['acc']:.4f} | val_auc_roc: {eval_results_val['auc']:.4f} | val_F1: {eval_results_val['f1']:.4f} | "
                   f"val_Parity: {eval_results_val['parity']:.4f} | val_Equality: {eval_results_val['equality']:.4f} | val_CounterFactual Fairness: {eval_results_val['cf']:.4f} |"
