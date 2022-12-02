@@ -17,6 +17,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.manifold import TSNE as tsn
 
 import torch
+torch.cuda.empty_cache()
 import torch.nn.functional as F
 import torch.optim as optim
 import matplotlib.pyplot as plt
