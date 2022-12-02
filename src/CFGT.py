@@ -70,7 +70,7 @@ class CFGT(nn.Module):
             loss_bce = nn.BCELoss(reduction='mean')
             loss_reconst_a = loss_bce(A_pred.reshape(-1), adj.to_dense().reshape(-1))
 
-        loss_result = {'loss_reconst_a': loss_reconst_a}
+        loss_result = {'loss_reconst_a': loss_reconst_a.float()}
         return loss_result
 
     def train_model(self, X, adj, sen_idx, dataset, model_path='', lr=0.0001, weight_decay=1e-5):
