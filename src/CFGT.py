@@ -27,12 +27,12 @@ class CFGT(nn.Module):
 
     def pred_adj(self, Z, S):
         A_pred = self.pred_a(Z)  # n x n
-        S_rep_f = self.sf(S).cpu()
-        S_rep_cf = self.sf(1 - S).cpu()
+        S_rep_f = self.sf(S)
+        S_rep_cf = self.sf(1 - S)
 
         s_match = (torch.matmul(S_rep_f, S_rep_f.t()) + torch.matmul(S_rep_cf, S_rep_cf.t())) / 2
-        A_pred = F.sigmoid(A_pred.cpu() + s_match)
-        return A_pred.cuda()
+        A_pred = F.sigmoid(A_pred + s_match)
+        return A_pred
 
     def encode(self, X):
         Z_a = self.encode_A(X)
@@ -64,11 +64,8 @@ class CFGT(nn.Module):
             idx_1 = adj.to_dense().reshape(-1) == 1
             weight[idx_1] = weights_1
 
-            loss_bce = nn.BCELoss(weight=weight, reduction='mean').to('cpu')
-            loss_reconst_a = loss_bce(A_pred.reshape(-1).cpu(), adj.to_dense().reshape(-1).cpu())
-            A_pred.cuda()
-            adj.cuda()
-            loss_reconst_a.cuda()
+            loss_bce = nn.BCELoss(weight=weight, reduction='mean')
+            loss_reconst_a = loss_bce(A_pred.reshape(-1), adj.to_dense().reshape(-1))
         else:
             loss_bce = nn.BCELoss(reduction='mean')
             loss_reconst_a = loss_bce(A_pred.reshape(-1), adj.to_dense().reshape(-1))

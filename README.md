@@ -1,8 +1,8 @@
 ## Environment
 ```
 python 3.7
-conda install pytorch==1.9.0 torchvision==0.10.0 torchaudio==0.9.0 cudatoolkit=10.2 -c pytorch
-conda install pyg -c pyg -c conda-forge
+conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
+pip install pyg-lib torch-scatter torch-sparse torch-cluster torch-spline-conv torch-geometric -f https://data.pyg.org/whl/torch-1.13.0+cu117.html
 ```
 and then install matplotlib, sklearn and so on.
 
