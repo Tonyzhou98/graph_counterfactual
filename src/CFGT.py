@@ -60,7 +60,7 @@ class CFGT(nn.Module):
             weights_0 = torch.sparse.sum(adj) / (adj.shape[0] * adj.shape[1])
             weights_1 = 1 - weights_0
             assert (weights_0 > 0 and weights_1 > 0)
-            weight = torch.ones_like(A_pred).reshape(-1) * weights_0  # (n x n), weight 0
+            weight = torch.ones_like(A_pred.cuda()).reshape(-1) * weights_0  # (n x n), weight 0
             idx_1 = adj.to_dense().reshape(-1) == 1
             weight[idx_1] = weights_1
 
