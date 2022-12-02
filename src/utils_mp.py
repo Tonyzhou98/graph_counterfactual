@@ -62,8 +62,8 @@ class PPR:
             # print ('Processing node {}.'.format(seed))
             neighbor = self.search(seed)
             torch.save(neighbor, ppr_path)
-        else:
-            print('File of node {} exists.'.format(seed))
+        # else:
+        #     print('File of node {} exists.'.format(seed))
 
     def search_all(self, node_num, path):
         neighbor = {}
