@@ -550,10 +550,10 @@ if __name__ == '__main__':
             path_truecf_data = 'graphFair_subgraph/cf/'
             if args.train_cf:
                 dpp.generate_cf_true(data, args.dataset, sens_rate_list, sens_idx, path_truecf_data, save_file=True,
-                                     raw_data_info=raw_data_info, train='test')  # generate
+                                     raw_data_info=raw_data_info, train='train')  # generate
             else:
                 dpp.generate_cf_true(data, args.dataset, sens_rate_list, sens_idx, path_truecf_data, save_file=True,
-                                     raw_data_info=raw_data_info, train='train')  # generate
+                                     raw_data_info=raw_data_info, train='test')  # generate
             sys.exit()  # stop here
 
         num_node = data.x.size(0)
