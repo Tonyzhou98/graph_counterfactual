@@ -86,7 +86,7 @@ class CFGT(nn.Module):
         n = X.shape[0]
 
         print("start training counterfactual augmentation module!")
-        for epoch in range(2000):
+        for epoch in range(500):
             optimizer.zero_grad()
 
             A_pred = self.forward(X, sen_idx)
@@ -97,7 +97,7 @@ class CFGT(nn.Module):
             loss_reconst_a.backward()
             optimizer.step()
 
-            if epoch % 10 == 0:
+            if epoch % 100 == 0:
                 self.eval()
                 eval_result = self.test(X, adj, sen_idx)
                 print('Epoch: {:04d}'.format(epoch + 1),
