@@ -149,8 +149,17 @@ def get_all_node_emb(model, mask, subgraph, num_node):
         maxx = min(list_size, (i + 1) * args.batch_size)
         minn = i * args.batch_size
         batch, index = subgraph.search(node_list[minn:maxx])
-        node = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(), index.cuda())
-        z[minn:maxx] = node
+
+        model.to("cpu")
+        node = model(batch.x.cpu(), batch.edge_index.cpu(), batch.batch.cpu(), index.cpu())
+        # node = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(), index.cuda())
+
+        batch.x.cuda()
+        batch.edge_index.cuda()
+        batch.batch.cuda()
+        index.cuda()
+        model = model.to("gpu")
+        z[minn:maxx] = node.cuda()
     return z
 
 
@@ -171,7 +180,7 @@ def get_all_node_pred(model, mask, subgraph, num_node):
     return y_pred
 
 
-def evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_select, type='easy'):
+def evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_select, type='ell'):
     loss_result = compute_loss(model, subgraph, cf_subgraph_list, labels, idx_select)
     if type == 'easy':
         eval_results = {'loss': loss_result['loss'], 'loss_c': loss_result['loss_c'], 'loss_s': loss_result['loss_s']}
