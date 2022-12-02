@@ -568,7 +568,8 @@ if __name__ == '__main__':
                 print('loaded counterfactual augmentation data from: ' + path_cf_ag)
         else:
             sens_cf = 1 - data.x[:, sens_idx]
-            data_cf = generate_cf_data(data, sens_idx, mode=1, sens_cf=sens_cf, adj_raw=adj, model_path=model_path)  #
+            data_cf = generate_cf_data(data, sens_idx, mode=1, sens_cf=sens_cf, adj_raw=adj, model_path=model_path,
+                                       train='train')  #
             path_cf_ag = 'graphFair_subgraph/aug/' + f'{args.dataset}_cf_aug_' + str(0) + '.pkl'
             with open(path_cf_ag, 'wb') as f:
                 data_cf_save = {'data_cf': data_cf}
