@@ -704,7 +704,7 @@ if __name__ == '__main__':
             else:
                 print(k, f": {eval_results[k]:.4f}")
 
-    # print('============================= Overall =============================================')
-    # for k in results_all_exp:
-    #     results_all_exp[k] = np.array(results_all_exp[k])
-    #     print(k, f": mean: {np.mean(results_all_exp[k]):.4f} | std: {np.std(results_all_exp[k]):.4f}")
+    print('============================= Overall =============================================')
+    for k in results_all_exp:
+        results_all_exp[k] = np.array(results_all_exp[k])
+        print(k, f": mean: {np.mean(results_all_exp[k]):.4f} | std: {np.std(results_all_exp[k]):.4f}")
