@@ -5,6 +5,7 @@ import os
 import numpy as np
 from torch import optim
 
+
 class CFDA(nn.Module):
     def __init__(self, h_dim, input_dim, adj):
         super(CFDA, self).__init__()
@@ -15,14 +16,14 @@ class CFDA(nn.Module):
         self.base_gcn = GraphConvSparse(input_dim, h_dim, adj)
         self.gcn_mean = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
         self.gcn_logstddev = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
-        self.pred_a = nn.Sequential(nn.Linear(h_dim+1, adj.shape[1]), nn.Sigmoid())
+        self.pred_a = nn.Sequential(nn.Linear(h_dim + 1, adj.shape[1]), nn.Sigmoid())
         # X
         self.base_gcn_x = GraphConvSparse(input_dim, h_dim, adj)
         self.gcn_mean_x = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
         self.gcn_logstddev_x = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
 
         # reconst_X
-        self.reconst_X = nn.Sequential(nn.Linear(h_dim+1, input_dim))
+        self.reconst_X = nn.Sequential(nn.Linear(h_dim + 1, input_dim))
         # pred_S
         self.pred_s = nn.Sequential(nn.Linear(h_dim + h_dim, self.s_num), nn.Softmax())
 
@@ -97,7 +98,7 @@ class CFDA(nn.Module):
             idx_1 = adj.to_dense().reshape(-1) == 1
             weight[idx_1] = weights_1
 
-            loss_bce = nn.BCELoss(weight=weight, reduction='mean')
+            loss_bce = nn.BCELoss(weight=weight, reduction='mean').to('cpu')
             loss_reconst_a = loss_bce(A_pred.reshape(-1).cpu(), adj.to_dense().reshape(-1).cpu())
             A_pred.cuda()
             adj.cuda()
@@ -122,8 +123,10 @@ class CFDA(nn.Module):
         print('adj=1: ', rate_1)
 
         par_s = list(self.pred_s.parameters())
-        par_other = list(self.base_gcn.parameters()) + list(self.gcn_mean.parameters()) + list(self.gcn_logstddev.parameters()) + list(self.pred_a.parameters()) + \
-                    list(self.base_gcn_x.parameters()) + list(self.gcn_mean_x.parameters()) + list(self.gcn_logstddev_x.parameters()) + list(self.reconst_X.parameters())
+        par_other = list(self.base_gcn.parameters()) + list(self.gcn_mean.parameters()) + list(
+            self.gcn_logstddev.parameters()) + list(self.pred_a.parameters()) + \
+                    list(self.base_gcn_x.parameters()) + list(self.gcn_mean_x.parameters()) + list(
+            self.gcn_logstddev_x.parameters()) + list(self.reconst_X.parameters())
         optimizer_1 = optim.Adam([{'params': par_s, 'lr': lr}], weight_decay=weight_decay)  #
         optimizer_2 = optim.Adam([{'params': par_other, 'lr': lr}], weight_decay=weight_decay)  #
 
@@ -159,7 +162,7 @@ class CFDA(nn.Module):
                 loss_s = loss_result['loss_s']
                 loss_reconst_x = loss_result['loss_reconst_x']
                 loss_reconst_a = loss_result['loss_reconst_a']
-                #loss_reconst_a.backward()
+                # loss_reconst_a.backward()
                 (-loss_s + loss_reconst_a + loss_reconst_x).backward()
                 optimizer_2.step()
 
@@ -209,8 +212,9 @@ class CFDA(nn.Module):
         eval_result['acc_a_pred_1'] = acc_a_pred_1
         return eval_result
 
+
 class GraphConvSparse(nn.Module):
-    def __init__(self, input_dim, output_dim, adj, activation = F.relu, **kwargs):
+    def __init__(self, input_dim, output_dim, adj, activation=F.relu, **kwargs):
         super(GraphConvSparse, self).__init__(**kwargs)
         self.weight = glorot_init(input_dim, output_dim)
         self.adj = adj
@@ -218,20 +222,20 @@ class GraphConvSparse(nn.Module):
 
     def forward(self, inputs):
         x = inputs
-        x = torch.mm(x,self.weight)
+        x = torch.mm(x, self.weight)
         x = torch.mm(self.adj, x)
         outputs = self.activation(x)
         return outputs
 
 
 def glorot_init(input_dim, output_dim):
-    init_range = np.sqrt(6.0/(input_dim + output_dim))
-    initial = torch.rand(input_dim, output_dim)*2*init_range - init_range
+    init_range = np.sqrt(6.0 / (input_dim + output_dim))
+    initial = torch.rand(input_dim, output_dim) * 2 * init_range - init_range
     return nn.Parameter(initial)
 
 
 def sparse_dense_mul(s, d):
     i = s._indices()
     v = s._values()
-    dv = d[i[0,:], i[1,:]]  # get values from relevant entries of dense matrix
+    dv = d[i[0, :], i[1, :]]  # get values from relevant entries of dense matrix
     return torch.sparse.FloatTensor(i, v * dv, s.size())
