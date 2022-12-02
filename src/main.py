@@ -350,7 +350,7 @@ def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_l
         if epoch % 100 == 0:
             model.eval()
             # eval_results_trn = evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_train)
-            eval_results_val = evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_val)
+            eval_results_val = evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_val, type='easy')
             print(f"[Train] Epoch {epoch}:train_s_loss: {(sim_loss / rep):.4f} | train_c_loss: {cl_loss:.4f} | "
                   # f"trn_loss: {eval_results_trn['loss']:.4f} |"
                   # f"trn_acc: {eval_results_trn['acc']:.4f} | trn_auc_roc: {eval_results_trn['auc']:.4f} | trn_F1: {eval_results_trn['f1']:.4f} | "
