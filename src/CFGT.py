@@ -31,7 +31,7 @@ class CFGT(nn.Module):
         S_rep_cf = self.sf(1 - S).cpu()
 
         s_match = (torch.matmul(S_rep_f, S_rep_f.t()) + torch.matmul(S_rep_cf, S_rep_cf.t())) / 2
-        A_pred = F.sigmoid(A_pred + s_match.cuda())
+        A_pred = F.sigmoid(A_pred.cpu() + s_match)
         return A_pred
 
     def encode(self, X):
