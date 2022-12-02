@@ -545,7 +545,7 @@ if __name__ == '__main__':
         # ============== generate counterfactual data (ground-truth) ================
         if experiment_type == 'cf':
             sens_rate_list = [0, 0.5, 1.0]
-            path_truecf_data = 'graphFair_subgraph/cf'
+            path_truecf_data = 'graphFair_subgraph/cf/'
             dpp.generate_cf_true(data, args.dataset, sens_rate_list, sens_idx, path_truecf_data, save_file=True,
                                  raw_data_info=raw_data_info)  # generate
             sys.exit()  # stop here
