@@ -61,6 +61,7 @@ parser.add_argument('--subgraph_size', type=int, help='subgraph size', default=3
 parser.add_argument('--n_order', type=int, help='order of neighbor nodes', default=10)
 parser.add_argument('--hidden_size', type=int, help='hidden size', default=1024)
 parser.add_argument('--experiment_type', type=str, default='train', choices=['train', 'cf', 'test'])  # train, cf, test
+parser.add_argument('--train_cf', type=bool, default=False, help='Whether to train the cf model.')
 
 args = parser.parse_known_args()[0]
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -568,8 +569,12 @@ if __name__ == '__main__':
                 print('loaded counterfactual augmentation data from: ' + path_cf_ag)
         else:
             sens_cf = 1 - data.x[:, sens_idx]
-            data_cf = generate_cf_data(data, sens_idx, mode=1, sens_cf=sens_cf, adj_raw=adj, model_path=model_path,
-                                       train='train')  #
+            if args.train_cf:
+                data_cf = generate_cf_data(data, sens_idx, mode=1, sens_cf=sens_cf, adj_raw=adj, model_path=model_path,
+                                           train='train')  #
+            else:
+                data_cf = generate_cf_data(data, sens_idx, mode=1, sens_cf=sens_cf, adj_raw=adj, model_path=model_path,
+                                           train='test')  #
             path_cf_ag = 'graphFair_subgraph/aug/' + f'{args.dataset}_cf_aug_' + str(0) + '.pkl'
             with open(path_cf_ag, 'wb') as f:
                 data_cf_save = {'data_cf': data_cf}

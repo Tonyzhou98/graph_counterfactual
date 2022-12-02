@@ -20,7 +20,7 @@ make directory ```./models_save/``` if you don't.
 
 and then
 ```
-python main.py --experiment_type train
+python main.py --experiment_type train --train_cf 1
 ```
 The subgraphs will be generated under ```./graphFair_subgraph/``` at the first time of running. If the files already exist, the subgraph data will be directly loaded. The true counterfactuals for evaluation are in ```./graphFair_subgraph/cf/```, and the augmented data is in ```./graphFair_subgraph/aug/```. The trained GEAR model can be saved in ```./models_save/```.
 
