@@ -83,7 +83,7 @@ class CFGT(nn.Module):
         n = X.shape[0]
 
         print("start training counterfactual augmentation module!")
-        for epoch in range(500):
+        for epoch in range(2000):
             optimizer.zero_grad()
 
             A_pred = self.forward(X, sen_idx)
