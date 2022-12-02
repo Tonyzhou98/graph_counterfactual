@@ -3,7 +3,6 @@ Graph fairness
 '''
 
 import time
-import gc
 import argparse
 import numpy as np
 import random
@@ -42,6 +41,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='Disables CUDA training.')
 parser.add_argument('--seed', type=int, default=1, help='Random seed.')
+parser.add_argument('--exp_num', type=int, default=1, help='the number of repeated experiments.')
 parser.add_argument('--epochs', type=int, default=1000,  # 1000
                     help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=0.001,
@@ -525,7 +525,7 @@ if __name__ == '__main__':
     # dpp.pre_analysis(adj, labels, sens)
 
     results_all_exp = {}
-    exp_num = 3
+    exp_num = args.exp_num
     for exp_i in range(0, exp_num):  # repeated experiments
         idx_train = idx_train_list[exp_i]
         idx_val = idx_val_list[exp_i]
@@ -701,11 +701,7 @@ if __name__ == '__main__':
             else:
                 print(k, f": {eval_results[k]:.4f}")
 
-        # empty the cache to free memory
-        gc.collect()
-        torch.cuda.empty_cache()
-
-    print('============================= Overall =============================================')
-    for k in results_all_exp:
-        results_all_exp[k] = np.array(results_all_exp[k])
-        print(k, f": mean: {np.mean(results_all_exp[k]):.4f} | std: {np.std(results_all_exp[k]):.4f}")
+    # print('============================= Overall =============================================')
+    # for k in results_all_exp:
+    #     results_all_exp[k] = np.array(results_all_exp[k])
+    #     print(k, f": mean: {np.mean(results_all_exp[k]):.4f} | std: {np.std(results_all_exp[k]):.4f}")
