@@ -66,6 +66,9 @@ class CFGT(nn.Module):
 
             loss_bce = nn.BCELoss(weight=weight, reduction='mean')
             loss_reconst_a = loss_bce(A_pred.reshape(-1).half(), adj.to_dense().reshape(-1).half())
+            adj.float()
+            A_pred.float()
+            loss_reconst_a.float()
         else:
             loss_bce = nn.BCELoss(reduction='mean')
             loss_reconst_a = loss_bce(A_pred.reshape(-1), adj.to_dense().reshape(-1))
