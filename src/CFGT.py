@@ -32,7 +32,7 @@ class CFGT(nn.Module):
 
         s_match = (torch.matmul(S_rep_f, S_rep_f.t()) + torch.matmul(S_rep_cf, S_rep_cf.t())) / 2
         A_pred = F.sigmoid(A_pred.cpu() + s_match)
-        return A_pred
+        return A_pred.cuda()
 
     def encode(self, X):
         Z_a = self.encode_A(X)
@@ -60,7 +60,7 @@ class CFGT(nn.Module):
             weights_0 = torch.sparse.sum(adj) / (adj.shape[0] * adj.shape[1])
             weights_1 = 1 - weights_0
             assert (weights_0 > 0 and weights_1 > 0)
-            weight = torch.ones_like(A_pred.cuda()).reshape(-1) * weights_0  # (n x n), weight 0
+            weight = torch.ones_like(A_pred).reshape(-1) * weights_0  # (n x n), weight 0
             idx_1 = adj.to_dense().reshape(-1) == 1
             weight[idx_1] = weights_1
 
