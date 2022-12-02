@@ -59,7 +59,7 @@ class PPR:
     def process(self, path, seed):
         ppr_path = os.path.join(path, 'ppr{}'.format(seed))
         if not os.path.isfile(ppr_path) or os.stat(ppr_path).st_size == 0:
-            print ('Processing node {}.'.format(seed))
+            # print ('Processing node {}.'.format(seed))
             neighbor = self.search(seed)
             torch.save(neighbor, ppr_path)
         else :
