@@ -22,6 +22,7 @@ import torch.optim as optim
 import matplotlib.pyplot as plt
 
 import warnings
+
 warnings.filterwarnings('ignore')
 
 import utils
@@ -40,7 +41,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='Disables CUDA training.')
 parser.add_argument('--seed', type=int, default=1, help='Random seed.')
-parser.add_argument('--epochs', type=int, default=1000, # 1000
+parser.add_argument('--epochs', type=int, default=1000,  # 1000
                     help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=0.001,
                     help='Initial learning rate.')
@@ -53,14 +54,13 @@ parser.add_argument('--dropout', type=float, default=0.5,
 parser.add_argument('--sim_coeff', type=float, default=0.6,
                     help='regularization similarity')
 parser.add_argument('--dataset', type=str, default='synthetic',
-                    choices=['synthetic','bail', 'credit'])
+                    choices=['synthetic', 'bail', 'credit'])
 parser.add_argument('--encoder', type=str, default='sage', choices=['gcn', 'gin', 'sage', 'infomax', 'jk'])
 parser.add_argument('--batch_size', type=int, help='batch size', default=100)
 parser.add_argument('--subgraph_size', type=int, help='subgraph size', default=30)
 parser.add_argument('--n_order', type=int, help='order of neighbor nodes', default=10)
 parser.add_argument('--hidden_size', type=int, help='hidden size', default=1024)
-parser.add_argument('--experiment_type', type=str, default='train', choices=['train', 'cf', 'test'])   # train, cf, test
-
+parser.add_argument('--experiment_type', type=str, default='train', choices=['train', 'cf', 'test'])  # train, cf, test
 
 args = parser.parse_known_args()[0]
 args.cuda = not args.no_cuda and torch.cuda.is_available()
@@ -77,12 +77,14 @@ torch.backends.cudnn.allow_tf32 = False
 # set device
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+
 def add_list_in_dict(key, dict, elem):
     if key not in dict:
         dict[key] = [elem]
     else:
         dict[key].append(elem)
     return dict
+
 
 def stats_cov(data1, data2):
     '''
@@ -111,6 +113,7 @@ def stats_cov(data1, data2):
     }
     return result
 
+
 def analyze_dependency(sens, adj, ypred_tst, idx_select, type='mean'):
     if type == 'mean':
         # row-normalize
@@ -125,13 +128,14 @@ def analyze_dependency(sens, adj, ypred_tst, idx_select, type='mean'):
 
 
 def fair_metric(pred, labels, sens):
-    idx_s0 = sens==0
-    idx_s1 = sens==1
-    idx_s0_y1 = np.bitwise_and(idx_s0, labels==1)
-    idx_s1_y1 = np.bitwise_and(idx_s1, labels==1)
-    parity = abs(sum(pred[idx_s0])/sum(idx_s0)-sum(pred[idx_s1])/sum(idx_s1))
-    equality = abs(sum(pred[idx_s0_y1])/sum(idx_s0_y1)-sum(pred[idx_s1_y1])/sum(idx_s1_y1))
+    idx_s0 = sens == 0
+    idx_s1 = sens == 1
+    idx_s0_y1 = np.bitwise_and(idx_s0, labels == 1)
+    idx_s1_y1 = np.bitwise_and(idx_s1, labels == 1)
+    parity = abs(sum(pred[idx_s0]) / sum(idx_s0) - sum(pred[idx_s1]) / sum(idx_s1))
+    equality = abs(sum(pred[idx_s0_y1]) / sum(idx_s0_y1) - sum(pred[idx_s1_y1]) / sum(idx_s1_y1))
     return parity.item(), equality.item()
+
 
 def get_all_node_emb(model, mask, subgraph, num_node):
     # Obtain central node embs from subgraphs
@@ -146,6 +150,7 @@ def get_all_node_emb(model, mask, subgraph, num_node):
         node = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(), index.cuda())
         z[minn:maxx] = node
     return z
+
 
 def get_all_node_pred(model, mask, subgraph, num_node):
     # Obtain central node prediction from subgraphs
@@ -162,6 +167,7 @@ def get_all_node_pred(model, mask, subgraph, num_node):
         y_pred_cur = model.predict(node)
         y_pred[minn:maxx] = (y_pred_cur.squeeze() > 0).float()
     return y_pred
+
 
 def evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_select, type='all'):
     loss_result = compute_loss(model, subgraph, cf_subgraph_list, labels, idx_select)
@@ -197,8 +203,10 @@ def evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_select, 
         cf /= len(cf_subgraph_list)
 
         eval_results = {'acc': acc, 'auc': auc_roc, 'f1': f1_s, 'parity': parity, 'equality': equality, 'cf': cf,
-                        'loss': loss_result['loss'], 'loss_c': loss_result['loss_c'], 'loss_s': loss_result['loss_s']}  # counterfactual_fairness
+                        'loss': loss_result['loss'], 'loss_c': loss_result['loss_c'],
+                        'loss_s': loss_result['loss_s']}  # counterfactual_fairness
     return eval_results
+
 
 def compute_loss(model, subgraph, cf_subgraph_list, labels, idx_select):
     idx_select_mask = (torch.zeros(n).scatter_(0, idx_select, 1) > 0)
@@ -220,7 +228,7 @@ def compute_loss(model, subgraph, cf_subgraph_list, labels, idx_select):
         loss_sim += loss_sim_si
     loss_sim /= len(cf_subgraph_list)
 
-    loss_result = {'loss_c': loss_c, 'loss_s': loss_sim, 'loss': loss_sim+loss_c}
+    loss_result = {'loss_c': loss_c, 'loss_s': loss_sim, 'loss': loss_sim + loss_c}
 
     return loss_result
 
@@ -240,11 +248,12 @@ def compute_loss_sim(model, subgraph, cf_subgraph, idx_select, z1=None, z2=None)
     h1 = model.prediction(p1)
     h2 = model.prediction(p2)
 
-    l1 = model.D(h1, p2)/2
-    l2 = model.D(h2, p1)/2
-    sim_loss = args.sim_coeff*(l1+l2)
+    l1 = model.D(h1, p2) / 2
+    l2 = model.D(h2, p1) / 2
+    sim_loss = args.sim_coeff * (l1 + l2)
 
     return sim_loss
+
 
 def evaluate_cf(model, data, subgraph, cf_subgraph, labels, sens, idx_select, type='self'):
     # Obtain COUNTERFACTUAL central node embs from subgraphs
@@ -256,14 +265,16 @@ def evaluate_cf(model, data, subgraph, cf_subgraph, labels, sens, idx_select, ty
         maxx = min(list_size, (i + 1) * args.batch_size)
         minn = i * args.batch_size
         if type == 'self':  # generate ground truth counterfactual subgraph: change self, fix others
-            batch, index = get_cf_self(node_list[minn:maxx]) # subgraph.search(node_list[minn:maxx])
+            batch, index = get_cf_self(node_list[minn:maxx])  # subgraph.search(node_list[minn:maxx])
         elif type == 'neighbor':
             batch, index = get_cf_neighbor(node_list[minn:maxx])
         node = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(), index.cuda())
         z[minn:maxx] = node
     return z
 
-def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_list, idx_train, idx_val, idx_test, exp_id):
+
+def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_list, idx_train, idx_val, idx_test,
+          exp_id):
     print("start training!")
     best_loss = 100
     labels = data.y
@@ -282,7 +293,8 @@ def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_l
 
             # forward: factual subgraph
             batch, index = subgraph.search(sample_idx)
-            z = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(), index.cuda()) # center node rep, subgraph rep
+            z = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(),
+                      index.cuda())  # center node rep, subgraph rep
 
             # projector
             p1 = model.projection(z)
@@ -294,7 +306,8 @@ def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_l
             for si in range(len(cf_subgraph_list)):
                 cf_subgraph = cf_subgraph_list[si]
                 batch_cf, index_cf = cf_subgraph.search(sample_idx)
-                z_cf = model(batch_cf.x.cuda(), batch_cf.edge_index.cuda(), batch_cf.batch.cuda(), index_cf.cuda())  # center node rep, subgraph rep
+                z_cf = model(batch_cf.x.cuda(), batch_cf.edge_index.cuda(), batch_cf.batch.cuda(),
+                             index_cf.cuda())  # center node rep, subgraph rep
 
                 # projector
                 p2 = model.projection(z_cf)
@@ -311,7 +324,8 @@ def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_l
         optimizer_1.step()
 
         # classifier
-        z = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(), index.cuda())  # center node rep, subgraph rep
+        z = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(),
+                  index.cuda())  # center node rep, subgraph rep
         c1 = model.classifier(z)
 
         # Binary Cross-Entropy
@@ -323,10 +337,10 @@ def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_l
         loss = (sim_loss / rep + cl_loss)
 
         # Validation
-        #model.eval()
-        #eval_results_trn = evaluate(model, data, subgraph, cf_subgraph, labels, sens, idx_train)
+        # model.eval()
+        # eval_results_trn = evaluate(model, data, subgraph, cf_subgraph, labels, sens, idx_train)
         # eval_results_val = evaluate(model, data, subgraph, cf_subgraph, labels, sens, idx_val)
-        #eval_results_tst = evaluate(model, data, subgraph, cf_subgraph, labels, sens, idx_test)
+        # eval_results_tst = evaluate(model, data, subgraph, cf_subgraph, labels, sens, idx_test)
         if epoch % 100 == 0:
             model.eval()
             eval_results_trn = evaluate(model, data, subgraph, cf_subgraph_list, labels, sens, idx_train)
@@ -338,9 +352,9 @@ def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_l
                   f"val_loss: {eval_results_val['loss']:.4f} |"
                   f"val_acc: {eval_results_val['acc']:.4f} | val_auc_roc: {eval_results_val['auc']:.4f} | val_F1: {eval_results_val['f1']:.4f} | "
                   f"val_Parity: {eval_results_val['parity']:.4f} | val_Equality: {eval_results_val['equality']:.4f} | val_CounterFactual Fairness: {eval_results_val['cf']:.4f} |"
-                  #f"tst_loss: {eval_results_tst['loss']:.4f} |"
-                  #f"tst_acc: {eval_results_tst['acc']:.4f} | tst_auc_roc: {eval_results_tst['auc']:.4f} | tst_F1: {eval_results_tst['f1']:.4f} | "
-                  #f"tst_Parity: {eval_results_tst['parity']:.4f} | tst_Equality: {eval_results_tst['equality']:.4f} | tst_CounterFactual Fairness: {eval_results_tst['cf']:.4f} |"
+                  # f"tst_loss: {eval_results_tst['loss']:.4f} |"
+                  # f"tst_acc: {eval_results_tst['acc']:.4f} | tst_auc_roc: {eval_results_tst['auc']:.4f} | tst_F1: {eval_results_tst['f1']:.4f} | "
+                  # f"tst_Parity: {eval_results_tst['parity']:.4f} | tst_Equality: {eval_results_tst['equality']:.4f} | tst_CounterFactual Fairness: {eval_results_tst['cf']:.4f} |"
                   )
 
             val_c_loss = eval_results_val['loss_c']
@@ -348,11 +362,14 @@ def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_l
             if (val_c_loss + val_s_loss) < best_loss:
                 # print(f'{epoch} | {val_s_loss:.4f} | {val_c_loss:.4f}')
                 best_loss = val_c_loss + val_s_loss
-                torch.save(model.state_dict(), f'models_save/weights_graphCF_{args.encoder}_{args.dataset}_exp'+str(exp_id)+'.pt')
+                torch.save(model.state_dict(),
+                           f'models_save/weights_graphCF_{args.encoder}_{args.dataset}_exp' + str(exp_id) + '.pt')
 
     return
 
-def test(model, adj, data, dataset, subgraph, cf_subgraph_pred_list, labels, sens, path_true_cf_data, sens_rate_list, idx_select):
+
+def test(model, adj, data, dataset, subgraph, cf_subgraph_pred_list, labels, sens, path_true_cf_data, sens_rate_list,
+         idx_select):
     #
     model.eval()
     eval_results_orin = evaluate(model, data, subgraph, cf_subgraph_pred_list, labels, sens, idx_select)
@@ -369,15 +386,15 @@ def test(model, adj, data, dataset, subgraph, cf_subgraph_pred_list, labels, sen
     for i in range(len(sens_rate_list)):
         # load cf-true data
         sens_rate = sens_rate_list[i]
-        post_str = dataset+'_cf_'+str(sens_rate)
-        file_path = path_true_cf_data+'/'+dataset+'_cf_'+str(sens_rate)+'.pkl'
+        post_str = dataset + '_cf_' + str(sens_rate)
+        file_path = path_true_cf_data + '/' + dataset + '_cf_' + str(sens_rate) + '.pkl'
 
         with open(file_path, 'rb') as f:
             data_cf = pickle.load(f)['data']
-            print('loaded data from: '+file_path)
+            print('loaded data from: ' + file_path)
 
         cf_subgraph = Subgraph(data_cf.x, data_cf.edge_index, ppr_path, args.subgraph_size, args.n_order)  # true
-        cf_subgraph.build(postfix='true_cf'+post_str)  # true_cf_0.3
+        cf_subgraph.build(postfix='true_cf' + post_str)  # true_cf_0.3
 
         n = len(data_cf.y)
         # performance
@@ -395,7 +412,8 @@ def test(model, adj, data, dataset, subgraph, cf_subgraph_pred_list, labels, sen
     cf_eval_dict = {'ave_cf_score': ave_cf_score, 'cf_score': cf_score}
 
     # r-square
-    col_ypred_s_summary = analyze_dependency(sens.cpu().numpy(), adj, output_preds.cpu().numpy(), idx_select, type='mean')
+    col_ypred_s_summary = analyze_dependency(sens.cpu().numpy(), adj, output_preds.cpu().numpy(), idx_select,
+                                             type='mean')
 
     eval_results = dict(eval_results_orin, **cf_eval_dict)  # counterfactual_fairness
 
@@ -433,11 +451,12 @@ def generate_cf_data(data, sens_idx, mode=1, sens_cf=None, adj_raw=None, model_p
                 'acc_a_pred_1: {:.4f}'.format(eval_result['acc_a_pred_1'].item()),
             )
     else:
-        model_DA.train_model(data.x.cuda(), adj.cuda(), sens_idx, args.dataset, model_path=model_path, lr=0.0001, weight_decay=1e-5)
+        model_DA.train_model(data.x.cuda(), adj.cuda(), sens_idx, args.dataset, model_path=model_path, lr=0.0001,
+                             weight_decay=1e-5)
 
     # generate cf for whole graph to achieve better efficiency
     Z_a, Z_x = model_DA.encode(data.x.cuda())
-    adj_update, x_update = model_DA.pred_graph(Z_a, Z_x, sens_cf.view(-1,1).cuda())
+    adj_update, x_update = model_DA.pred_graph(Z_a, Z_x, sens_cf.view(-1, 1).cuda())
 
     # hybrid
     w_hd_x = 0.99
@@ -480,23 +499,25 @@ def show_rep_distri(adj, model, data, subgraph, labels, sens, idx_select):
     ax.scatter(Zt_tsn[idx_emb_0, 0], Zt_tsn[idx_emb_0, 1], point_size, marker='o', color='r')  # cluster k
     ax.scatter(Zt_tsn[idx_emb_1, 0], Zt_tsn[idx_emb_1, 1], point_size, marker='o', color='b')  # cluster k
     # ax.scatter(Zt_tsn[k - num_cluster, 0], Zt_tsn[k - num_cluster, 1], centroid_size, marker='D',
-      #             color=cluster_color[k])  # centroid
-        # plt.xlim(-100, 100)
+    #             color=cluster_color[k])  # centroid
+    # plt.xlim(-100, 100)
 
     # plt.show()
     plt.xticks(fontsize=20)
     plt.yticks(fontsize=20)
 
-    #plt.savefig('./' + args.dataset + '_zt_cluster.tsne.pdf', bbox_inches='tight')
+    # plt.savefig('./' + args.dataset + '_zt_cluster.tsne.pdf', bbox_inches='tight')
     plt.show()
     return
+
 
 if __name__ == '__main__':
     experiment_type = args.experiment_type  # train, cf, test
     print('running experiment: ', experiment_type)
     data_path_root = '../'
     model_path = 'models_save/'
-    adj, features, labels, idx_train_list, idx_val_list, idx_test_list, sens, sens_idx, raw_data_info = dpp.load_data(data_path_root, args.dataset)
+    adj, features, labels, idx_train_list, idx_val_list, idx_test_list, sens, sens_idx, raw_data_info = dpp.load_data(
+        data_path_root, args.dataset)
     if raw_data_info is None:
         raw_data_info = {'adj': adj}
     # dpp.pre_analysis(adj, labels, sens)
@@ -525,7 +546,8 @@ if __name__ == '__main__':
         if experiment_type == 'cf':
             sens_rate_list = [0, 0.5, 1.0]
             path_truecf_data = 'graphFair_subgraph/cf/'
-            dpp.generate_cf_true(data, args.dataset, sens_rate_list, sens_idx, path_truecf_data, save_file=True, raw_data_info=raw_data_info)  # generate
+            dpp.generate_cf_true(data, args.dataset, sens_rate_list, sens_idx, path_truecf_data, save_file=True,
+                                 raw_data_info=raw_data_info)  # generate
             sys.exit()  # stop here
 
         num_node = data.x.size(0)
@@ -590,12 +612,14 @@ if __name__ == '__main__':
 
             model = models.GraphCF(encoder=models.Encoder(data.num_features, args.hidden_size, base_model=args.encoder),
                                    args=args, num_class=num_class).to(device)
-            model.load_state_dict(torch.load(model_path +f'weights_graphCF_{args.encoder}_{args.dataset}_exp'+str(exp_i)+'.pt'))
+            model.load_state_dict(
+                torch.load(model_path + f'weights_graphCF_{args.encoder}_{args.dataset}_exp' + str(exp_i) + '.pt'))
 
-            #show_rep_distri(adj, model, data, subgraph, labels, sens, idx_test)
-            #sys.exit()
+            # show_rep_distri(adj, model, data, subgraph, labels, sens, idx_test)
+            # sys.exit()
 
-            eval_results = test(model, adj, data, args.dataset, subgraph, cf_subgraph_list, labels, sens, path_true_cf_data, sens_rate_list, idx_test)
+            eval_results = test(model, adj, data, args.dataset, subgraph, cf_subgraph_list, labels, sens,
+                                path_true_cf_data, sens_rate_list, idx_test)
 
             results_all_exp = add_list_in_dict('Accuracy', results_all_exp, eval_results['acc'])
             results_all_exp = add_list_in_dict('F1-score', results_all_exp, eval_results['f1'])
@@ -606,7 +630,7 @@ if __name__ == '__main__':
             results_all_exp = add_list_in_dict('CounterFactual Fairness', results_all_exp, eval_results['cf'])
             results_all_exp = add_list_in_dict('R-square', results_all_exp, eval_results['R-square'])
 
-            print('=========================== Exp ', str(exp_i),' ==================================')
+            print('=========================== Exp ', str(exp_i), ' ==================================')
             for k in eval_results:
                 if isinstance(eval_results[k], list):
                     print(k, ": ", eval_results[k])
@@ -623,7 +647,8 @@ if __name__ == '__main__':
                 sys.exit()
 
         # Setting up the model and optimizer
-        model = models.GraphCF(encoder=models.Encoder(data.num_features, args.hidden_size, base_model=args.encoder), args=args, num_class=num_class).to(device)
+        model = models.GraphCF(encoder=models.Encoder(data.num_features, args.hidden_size, base_model=args.encoder),
+                               args=args, num_class=num_class).to(device)
         par_1 = list(model.encoder.parameters()) + list(model.fc1.parameters()) + list(model.fc2.parameters()) + list(
             model.fc3.parameters()) + list(model.fc4.parameters())
         par_2 = list(model.c1.parameters()) + list(model.encoder.parameters())
@@ -634,16 +659,20 @@ if __name__ == '__main__':
         if args.cuda:
             model = model.to(device)
 
-        train(args.epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_list, idx_train, idx_val, idx_test, exp_i)
+        train(args.epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_list, idx_train, idx_val,
+              idx_test, exp_i)
 
         # ========= test all ===========
         # evaluate on the best model, we use TRUE CF graphs
         sens_rate_list = [0, 0.5, 1.0]
         path_true_cf_data = 'graphFair_subgraph/cf'  # no '/'
 
-        model = models.GraphCF(encoder=models.Encoder(data.num_features, args.hidden_size, base_model=args.encoder), args=args, num_class=num_class).to(device)
-        model.load_state_dict(torch.load(model_path + f'weights_graphCF_{args.encoder}_{args.dataset}_exp'+str(exp_i)+'.pt'))
-        eval_results = test(model, adj, data, args.dataset, subgraph, cf_subgraph_list, labels, sens, path_true_cf_data, sens_rate_list, idx_test)
+        model = models.GraphCF(encoder=models.Encoder(data.num_features, args.hidden_size, base_model=args.encoder),
+                               args=args, num_class=num_class).to(device)
+        model.load_state_dict(
+            torch.load(model_path + f'weights_graphCF_{args.encoder}_{args.dataset}_exp' + str(exp_i) + '.pt'))
+        eval_results = test(model, adj, data, args.dataset, subgraph, cf_subgraph_list, labels, sens, path_true_cf_data,
+                            sens_rate_list, idx_test)
 
         results_all_exp = add_list_in_dict('Accuracy', results_all_exp, eval_results['acc'])
         results_all_exp = add_list_in_dict('F1-score', results_all_exp, eval_results['f1'])
@@ -665,12 +694,3 @@ if __name__ == '__main__':
     for k in results_all_exp:
         results_all_exp[k] = np.array(results_all_exp[k])
         print(k, f": mean: {np.mean(results_all_exp[k]):.4f} | std: {np.std(results_all_exp[k]):.4f}")
-
-
-
-
-
-
-
-
-
