@@ -61,7 +61,7 @@ parser.add_argument('--batch_size', type=int, help='batch size', default=100)
 parser.add_argument('--evaluate_batch_size', type=int, help='evaluate batch size', default=10)
 parser.add_argument('--subgraph_size', type=int, help='subgraph size', default=30)
 parser.add_argument('--n_order', type=int, help='order of neighbor nodes', default=10)
-parser.add_argument('--hidden_size', type=int, help='hidden size', default=1024)
+parser.add_argument('--hidden_size', type=int, help='hidden size', default=512)
 parser.add_argument('--experiment_type', type=str, default='train', choices=['train', 'cf', 'test'])  # train, cf, test
 parser.add_argument('--train_cf', type=bool, default=False, help='Whether to train the cf model.')
 
