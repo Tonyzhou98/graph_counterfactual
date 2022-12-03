@@ -58,7 +58,7 @@ parser.add_argument('--dataset', type=str, default='synthetic',
                     choices=['synthetic', 'bail', 'credit'])
 parser.add_argument('--encoder', type=str, default='sage', choices=['gcn', 'gin', 'sage', 'infomax', 'jk'])
 parser.add_argument('--batch_size', type=int, help='batch size', default=100)
-parser.add_argument('--evaluate_batch_size', type=int, help='evaluate batch size', default=10)
+parser.add_argument('--evaluate_batch_size', type=int, help='evaluate batch size', default=100)
 parser.add_argument('--subgraph_size', type=int, help='subgraph size', default=30)
 parser.add_argument('--n_order', type=int, help='order of neighbor nodes', default=10)
 parser.add_argument('--hidden_size', type=int, help='hidden size', default=512)
