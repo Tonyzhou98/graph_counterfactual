@@ -1,7 +1,7 @@
 '''
 Graph fairness
 '''
-
+import gc
 import time
 import argparse
 import numpy as np
@@ -332,6 +332,8 @@ def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_l
         # classifier
         z = model(batch.x.cuda(), batch.edge_index.cuda(), batch.batch.cuda(),
                   index.cuda())  # center node rep, subgraph rep
+        del batch, index
+        gc.collect()
         c1 = model.classifier(z)
 
         # Binary Cross-Entropy
@@ -366,7 +368,7 @@ def train(epochs, model, optimizer_1, optimizer_2, data, subgraph, cf_subgraph_l
             val_c_loss = eval_results_val['loss_c']
             val_s_loss = eval_results_val['loss_s']
             if (val_c_loss + val_s_loss) < best_loss:
-                # print(f'{epoch} | {val_s_loss:.4f} | {val_c_loss:.4f}')
+                print(f'{epoch} | {val_s_loss:.4f} | {val_c_loss:.4f}')
                 best_loss = val_c_loss + val_s_loss
                 torch.save(model.state_dict(),
                            f'models_save/weights_graphCF_{args.encoder}_{args.dataset}_exp' + str(exp_id) + '.pt')
