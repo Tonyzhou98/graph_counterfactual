@@ -41,7 +41,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--no-cuda', action='store_true', default=False,
                     help='Disables CUDA training.')
 parser.add_argument('--seed', type=int, default=1, help='Random seed.')
-parser.add_argument('--exp_num', type=int, default=1, help='the number of repeated experiments.')
+parser.add_argument('--exp_num', type=int, default=3, help='the number of repeated experiments.')
 parser.add_argument('--epochs', type=int, default=1000,  # 1000
                     help='Number of epochs to train.')
 parser.add_argument('--lr', type=float, default=0.001,
