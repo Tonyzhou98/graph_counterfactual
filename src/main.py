@@ -440,7 +440,7 @@ def generate_cf_data(data, sens_idx, mode=1, sens_cf=None, adj_raw=None, model_p
 
     model_DA = CFDA(h_dim, input_dim, adj.cuda()).to(device)
     if train == 'test':
-        model_DA.load_state_dict(torch.load(model_path + f'weights_CFDA_{args.dataset}' + '.pt'))
+        model_DA.load_state_dict(torch.load(model_path + f'weights_CFDA_{args.dataset}_{model_DA.type}' + '.pt'))
         # test?
         test_model = True
         if test_model:
