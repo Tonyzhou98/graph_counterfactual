@@ -32,7 +32,11 @@ class CFDA(nn.Module):
         hidden = self.base_gcn(mask_X)
         mean = self.gcn_mean(hidden)
         logstd = self.gcn_logstddev(hidden)
-        gaussian_noise = torch.randn(X.size(0), self.h_dim)
+
+        shape = torch.Size((X.size(0), self.h_dim))
+        gaussian_noise = torch.cuda.FloatTensor(shape)
+        torch.randn(shape, out=gaussian_noise)
+
         if self.training and self.type == 'VGAE':
             sampled_z = gaussian_noise * torch.exp(logstd) + mean
         else:
@@ -43,7 +47,11 @@ class CFDA(nn.Module):
         hidden = self.base_gcn_x(X)
         mean = self.gcn_mean_x(hidden)
         logstd = self.gcn_logstddev_x(hidden)
-        gaussian_noise = torch.randn(X.size(0), self.h_dim)
+
+        shape = torch.Size((X.size(0), self.h_dim))
+        gaussian_noise = torch.cuda.FloatTensor(shape)
+        torch.randn(shape, out=gaussian_noise)
+        
         if self.training and self.type == 'VGAE':
             sampled_z = gaussian_noise * torch.exp(logstd) + mean
         else:
