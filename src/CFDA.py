@@ -177,7 +177,7 @@ class CFDA(nn.Module):
                 # save model
                 save_model = True
                 if save_model and epoch > 0:
-                    save_model_path = model_path + f'weights_CFDA_{dataset}' + '.pt'
+                    save_model_path = model_path + f'weights_CFDA_{dataset}_{self.type}' + '.pt'
                     torch.save(self.state_dict(), save_model_path)
                     print('saved model weight in: ', save_model_path)
                 self.train()
