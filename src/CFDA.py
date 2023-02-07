@@ -34,6 +34,8 @@ class CFDA(nn.Module):
         logstd = self.gcn_logstddev(hidden)
         gaussian_noise = torch.randn_like(logstd, requires_grad=True)
         print(gaussian_noise.device)
+        print(logstd.device)
+        print(mean.device)
         # print(gaussian_noise.size())
         # print(logstd.size())
         if self.training and self.type == 'VGAE':
