@@ -158,11 +158,11 @@ class CFDA(nn.Module):
                 loss_result = self.loss_function(adj, X, sen_idx, S_agg_cat, A_pred, X_pred, S_agg_pred)
 
                 # backward propagation
-                loss_s = loss_result['loss_s'].long().cuda()
-                loss_reconst_x = loss_result['loss_reconst_x'].long().cuda()
-                loss_reconst_a = loss_result['loss_reconst_a'].long().cuda()
+                loss_s = loss_result['loss_s']
+                loss_reconst_x = loss_result['loss_reconst_x']
+                loss_reconst_a = loss_result['loss_reconst_a']
                 # loss_reconst_a.backward()
-                (loss_reconst_a + loss_reconst_x).backward()
+                (-loss_s + loss_reconst_a + loss_reconst_x).backward()
                 optimizer_2.step()
 
             if epoch % 100 == 0:
