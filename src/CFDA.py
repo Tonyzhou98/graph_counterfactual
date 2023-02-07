@@ -32,9 +32,9 @@ class CFDA(nn.Module):
         hidden = self.base_gcn(mask_X)
         mean = self.gcn_mean(hidden)
         logstd = self.gcn_logstddev(hidden)
-        gaussian_noise = torch.randn(X.size(0), self.h_dim)
-        print(gaussian_noise.size())
-        print(logstd.size())
+        gaussian_noise = torch.randn_like(logstd, requires_grad=True)
+        # print(gaussian_noise.size())
+        # print(logstd.size())
         if self.training and self.type == 'VGAE':
             sampled_z = gaussian_noise * torch.exp(logstd) + mean
         else:
