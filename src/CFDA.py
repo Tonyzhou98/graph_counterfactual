@@ -30,11 +30,6 @@ class CFDA(nn.Module):
     def encode_A(self, X):
         mask_X = X
         hidden = self.base_gcn(mask_X)
-        print("X")
-        print(mask_X)
-        print("Hidden")
-        print(hidden)
-
         mean = self.gcn_mean(hidden)
         logstd = self.gcn_logstddev(hidden)
         gaussian_noise = torch.randn_like(logstd, requires_grad=True)
@@ -43,10 +38,8 @@ class CFDA(nn.Module):
         if self.training and self.type == 'VGAE':
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
             std = torch.exp(logstd)
-            print("STD")
-            print(std)
-            print("Log STD")
-            print(logstd)
+            if torch.any(torch.isinf(std)).item():
+                std = logstd
             sampled_z = gaussian_noise * std + mean
         else:
             sampled_z = mean
@@ -60,6 +53,8 @@ class CFDA(nn.Module):
         if self.training and self.type == 'VGAE':
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
             std = torch.exp(logstd)
+            if torch.any(torch.isinf(std)).item():
+                std = logstd
             sampled_z = gaussian_noise * std + mean
         else:
             sampled_z = mean
