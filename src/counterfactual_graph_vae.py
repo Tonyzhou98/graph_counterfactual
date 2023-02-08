@@ -87,7 +87,6 @@ class CFVAE(nn.Module):
         # reproduce the causal VAE here
         hidden = self.base_gcn_x(X)
         q_m, q_v = self.gcn_mean_x(hidden), self.gcn_logstddev_x(hidden)
-        
 
     def loss_function(self, adj, X, sen_idx, S_agg_cat, A_pred, X_pred, S_agg_pred):
         # loss_reconst
