@@ -9,7 +9,7 @@ from torch import optim
 class CFDA(nn.Module):
     def __init__(self, h_dim, input_dim, adj):
         super(CFDA, self).__init__()
-        self.type = 'VGAE'
+        self.type = 'GAE'
         self.h_dim = h_dim
         self.s_num = 4
         # A
