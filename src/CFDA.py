@@ -38,10 +38,11 @@ class CFDA(nn.Module):
         if self.training and self.type == 'VGAE':
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
             std = torch.exp(logstd)
-            if torch.any(torch.isinf(std)).item():
+            if torch.any(torch.isinf(std)).item() or torch.any(torch.isinf(hidden)).item():
                 # if it is infinity, make the std to 0
-                std = torch.zeros_like(logstd)
-            sampled_z = gaussian_noise * std + mean
+                sampled_z = mean
+            else:
+                sampled_z = gaussian_noise * std + mean
         else:
             sampled_z = mean
         return sampled_z
@@ -54,9 +55,11 @@ class CFDA(nn.Module):
         if self.training and self.type == 'VGAE':
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
             std = torch.exp(logstd)
-            if torch.any(torch.isinf(std)).item():
-                std = torch.zeros_like(logstd)
-            sampled_z = gaussian_noise * std + mean
+            if torch.any(torch.isinf(std)).item() or torch.any(torch.isinf(hidden)).item():
+                # if it is infinity, make the std to 0
+                sampled_z = mean
+            else:
+                sampled_z = gaussian_noise * std + mean
         else:
             sampled_z = mean
         return sampled_z
