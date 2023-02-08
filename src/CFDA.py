@@ -166,7 +166,7 @@ class CFDA(nn.Module):
 
         print("start training counterfactual augmentation module!")
         for epoch in range(2000):
-            for i in range(3):
+            for i in range(1):
                 optimizer_1.zero_grad()
 
                 A_pred, X_pred, S_agg_pred = self.forward(X, sen_idx)
