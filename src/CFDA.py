@@ -13,6 +13,7 @@ class CFDA(nn.Module):
         self.h_dim = h_dim
         self.s_num = 4
         # A
+        self.batch_norm_input = nn.BatchNorm1d(input_dim)
         self.base_gcn = GraphConvSparse(input_dim, h_dim, adj)
         self.batch_norm_hidden = nn.BatchNorm1d(h_dim)
         self.gcn_mean = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
@@ -21,7 +22,7 @@ class CFDA(nn.Module):
         self.batch_norm_dev = nn.BatchNorm1d(h_dim)
         self.pred_a = nn.Sequential(nn.Linear(h_dim + 1, adj.shape[1]), nn.Sigmoid())
         # X
-
+        self.batch_norm_input_x = nn.BatchNorm1d(input_dim)
         self.base_gcn_x = GraphConvSparse(input_dim, h_dim, adj)
         self.batch_norm_hidden_x = nn.BatchNorm1d(h_dim)
         self.gcn_mean_x = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
@@ -35,7 +36,7 @@ class CFDA(nn.Module):
         self.pred_s = nn.Sequential(nn.Linear(h_dim + h_dim, self.s_num), nn.Softmax())
 
     def encode_A(self, X):
-        mask_X = X
+        mask_X = self.batch_norm_input(X)
         hidden = self.base_gcn(mask_X)
         hidden = self.batch_norm_hidden(hidden)
         mean = self.gcn_mean(hidden)
@@ -54,6 +55,7 @@ class CFDA(nn.Module):
         return sampled_z
 
     def encode_X(self, X):
+        X = self.batch_norm_input_X(X)
         hidden = self.base_gcn_x(X)
         hidden = self.batch_norm_hidden_x(hidden)
         mean = self.gcn_mean_x(hidden)
@@ -67,6 +69,7 @@ class CFDA(nn.Module):
             sampled_z = gaussian_noise * std + mean
 
             print(mean)
+            print(hidden)
             print(sampled_z)
             print(logstd)
             print(torch.any(torch.isnan(std)).item())
