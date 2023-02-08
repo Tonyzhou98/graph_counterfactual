@@ -136,6 +136,10 @@ class CFDA(nn.Module):
         X_ns = X.clone()
         X_ns[:, sen_idx] = 0.  # mute this sensitive dim
         loss_mse = nn.MSELoss(reduction='mean')
+        print("non-Sensitivity X")
+        print(X_ns)
+        print("Predict X")
+        print(X_pred)
         loss_reconst_x = loss_mse(X_pred, X_ns)
 
         loss_ce = nn.CrossEntropyLoss()
@@ -166,7 +170,7 @@ class CFDA(nn.Module):
 
         print("start training counterfactual augmentation module!")
         for epoch in range(2000):
-            for i in range(1):
+            for i in range(3):
                 optimizer_1.zero_grad()
 
                 A_pred, X_pred, S_agg_pred = self.forward(X, sen_idx)
@@ -186,9 +190,6 @@ class CFDA(nn.Module):
                 loss_s = loss_result['loss_s']
                 loss_reconst_x = loss_result['loss_reconst_x']
                 loss_reconst_a = loss_result['loss_reconst_a']
-                print(loss_s)
-                print(loss_reconst_a)
-                print(loss_reconst_x)
                 # loss_reconst_a.backward()
                 (-loss_s + loss_reconst_a + loss_reconst_x).backward()
                 optimizer_2.step()
