@@ -50,7 +50,7 @@ class CFDA(nn.Module):
         gaussian_noise = torch.randn_like(mean, requires_grad=True)
         if self.training and self.type == 'VGAE':
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
-            std = torch.exp(0.1 * logstd)
+            std = torch.exp(0.05 * logstd)
             sampled_z = gaussian_noise * std + mean
         else:
             sampled_z = mean
