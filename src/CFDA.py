@@ -175,7 +175,6 @@ class CFDA(nn.Module):
                 # backward propagation
                 loss_s = loss_result['loss_s']
                 loss_s.backward()
-                torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
                 optimizer_1.step()
 
             for i in range(5):
@@ -187,9 +186,11 @@ class CFDA(nn.Module):
                 loss_s = loss_result['loss_s']
                 loss_reconst_x = loss_result['loss_reconst_x']
                 loss_reconst_a = loss_result['loss_reconst_a']
+                print(loss_s)
+                print(loss_reconst_a)
+                print(loss_reconst_x)
                 # loss_reconst_a.backward()
                 (-loss_s + loss_reconst_a + loss_reconst_x).backward()
-                torch.nn.utils.clip_grad_norm_(self.parameters(), 1.0)
                 optimizer_2.step()
 
             if epoch % 100 == 0:
