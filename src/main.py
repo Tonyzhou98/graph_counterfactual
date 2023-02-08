@@ -532,7 +532,7 @@ if __name__ == '__main__':
 
     results_all_exp = {}
     exp_num = args.exp_num
-    for exp_i in range(0, exp_num):  # repeated experiments
+    for exp_i in range(1, exp_num):  # repeated experiments
         idx_train = idx_train_list[exp_i]
         idx_val = idx_val_list[exp_i]
         idx_test = idx_test_list[exp_i]
