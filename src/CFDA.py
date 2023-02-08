@@ -67,8 +67,8 @@ class CFDA(nn.Module):
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
             std = torch.exp(logstd)
             sampled_z = gaussian_noise * std + mean
-            print(X)
-            print(mean)
+            print(X.type())
+            print(mean.type())
             print(hidden)
             print(sampled_z)
             print(logstd)
@@ -140,10 +140,8 @@ class CFDA(nn.Module):
         perm = torch.randperm(len(X_ns))
         idx = perm[: 64]
         print("non-Sensitivity X")
-        print(X_ns[idx])
         print(X_ns.type())
         print("Predict X")
-        print(X_pred[idx])
         loss_reconst_x = loss_mse(X_pred[idx], X_ns[idx])
         print(loss_reconst_x)
 
