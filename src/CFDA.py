@@ -16,13 +16,17 @@ class CFDA(nn.Module):
         self.base_gcn = GraphConvSparse(input_dim, h_dim, adj)
         self.batch_norm_hidden = nn.BatchNorm1d(h_dim)
         self.gcn_mean = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
+        self.batch_norm_mean = nn.BatchNorm1d(h_dim)
         self.gcn_logstddev = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
+        self.batch_norm_dev = nn.BatchNorm1d(h_dim)
         self.pred_a = nn.Sequential(nn.Linear(h_dim + 1, adj.shape[1]), nn.Sigmoid())
         # X
 
         self.base_gcn_x = GraphConvSparse(input_dim, h_dim, adj)
         self.batch_norm_hidden_x = nn.BatchNorm1d(h_dim)
         self.gcn_mean_x = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
+        self.batch_norm_mean_x = nn.BatchNorm1d(h_dim)
+        self.batch_norm_dev_x = nn.BatchNorm1d(h_dim)
         self.gcn_logstddev_x = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
 
         # reconst_X
@@ -35,7 +39,9 @@ class CFDA(nn.Module):
         hidden = self.base_gcn(mask_X)
         hidden = self.batch_norm_hidden(hidden)
         mean = self.gcn_mean(hidden)
+        mean = self.batch_norm_mean(mean)
         logstd = self.gcn_logstddev(hidden)
+        logstd = self.batch_norm_dev(logstd)
         gaussian_noise = torch.randn_like(mean, requires_grad=True)
         # print(gaussian_noise.size())
         # print(logstd.size())
@@ -51,7 +57,9 @@ class CFDA(nn.Module):
         hidden = self.base_gcn_x(X)
         hidden = self.batch_norm_hidden_x(hidden)
         mean = self.gcn_mean_x(hidden)
+        mean = self.batch_norm_mean_x(mean)
         logstd = self.gcn_logstddev_x(hidden)
+        logstd = self.batch_norm_dev_x(logstd)
         gaussian_noise = torch.randn_like(mean, requires_grad=True)
         if self.training and self.type == 'VGAE':
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
