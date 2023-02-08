@@ -143,7 +143,7 @@ class CFDA(nn.Module):
         S_agg_cat = torch.floor(S_agg / ((S_agg_max + 0.000001 - S_agg_min) / self.s_num)).long()  # n x 1
 
         print("start training counterfactual augmentation module!")
-        for epoch in range(20):
+        for epoch in range(2000):
             for i in range(3):
                 optimizer_1.zero_grad()
 
