@@ -68,13 +68,13 @@ class CFDA(nn.Module):
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
             std = torch.exp(logstd)
             sampled_z = gaussian_noise * std + mean
-            print(X.type())
-            print(mean.type())
-            print(hidden.type())
-            print(sampled_z.type())
-            print(logstd.type())
-            print(torch.any(torch.isnan(std)).item())
-            print(torch.any(torch.isinf(std)).item())
+            # print(X.type())
+            # print(mean.type())
+            # print(hidden.type())
+            # print(sampled_z.type())
+            # print(logstd.type())
+            # print(torch.any(torch.isnan(std)).item())
+            # print(torch.any(torch.isinf(std)).item())
         else:
             sampled_z = mean
         return sampled_z
@@ -138,10 +138,10 @@ class CFDA(nn.Module):
         X_ns[:, sen_idx] = 0.  # mute this sensitive dim
         loss_mse = nn.MSELoss(reduction='mean')
 
-        # perm = torch.randperm(len(X_ns))
-        # idx = perm[: 64]
-        X_ns = self.reconst_batch_norm(X_ns)
-        X_pred = self.reconst_batch_norm(X_pred)
+        perm = torch.randperm(len(X_ns))
+        idx = perm[: 64]
+        X_ns = X_ns[idx]
+        X_pred = X_pred[idx]
         print("non-Sensitivity X")
         print(X_ns)
         print("Predict X")
