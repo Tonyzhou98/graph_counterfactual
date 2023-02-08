@@ -55,6 +55,7 @@ class CFDA(nn.Module):
             std = torch.exp(logstd)
             if torch.any(torch.isinf(std)).item():
                 std = logstd
+            print(std)
             sampled_z = gaussian_noise * std + mean
         else:
             sampled_z = mean
