@@ -141,6 +141,7 @@ class CFDA(nn.Module):
         idx = perm[: 64]
         print("non-Sensitivity X")
         print(X_ns[idx])
+        print(X_ns.type())
         print("Predict X")
         print(X_pred[idx])
         loss_reconst_x = loss_mse(X_pred[idx], X_ns[idx])
