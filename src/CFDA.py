@@ -60,7 +60,10 @@ class CFDA(nn.Module):
                 sampled_z = mean
             else:
                 sampled_z = gaussian_noise * std + mean
-            print(sampled_z)
+            print(hidden)
+            print(mean)
+            print(std)
+            print(torch.any(torch.isinf(std)).item())
         else:
             sampled_z = mean
         return sampled_z
