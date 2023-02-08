@@ -138,10 +138,11 @@ class CFDA(nn.Module):
         X_ns[:, sen_idx] = 0.  # mute this sensitive dim
         loss_mse = nn.MSELoss(reduction='mean')
 
-        perm = torch.randperm(len(X_ns))
-        idx = perm[: 1024]
-        X_ns = X_ns[idx]
-        X_pred = X_pred[idx]
+        if self.training and self.type == 'VGAE':
+            perm = torch.randperm(len(X_ns))
+            idx = perm[: 1024]
+            X_ns = X_ns[idx]
+            X_pred = X_pred[idx]
         loss_reconst_x = loss_mse(X_pred, X_ns)
         # if loss_reconst_x > 100:
         #     print("non-Sensitivity X")
