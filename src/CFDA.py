@@ -141,6 +141,7 @@ class CFDA(nn.Module):
         # perm = torch.randperm(len(X_ns))
         # idx = perm[: 64]
         X_ns = self.reconst_batch_norm(X_ns)
+        X_pred = self.reconst_batch_norm(X_pred)
         print("non-Sensitivity X")
         print(X_ns)
         print("Predict X")
