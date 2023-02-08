@@ -247,6 +247,7 @@ class GraphConvSparse(nn.Module):
     def forward(self, inputs):
         x = inputs
         x = torch.mm(x, self.weight)
+        print(self.weight)
         x = torch.mm(self.adj, x)
         outputs = self.activation(x)
         return outputs
