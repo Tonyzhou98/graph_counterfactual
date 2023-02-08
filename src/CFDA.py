@@ -138,17 +138,17 @@ class CFDA(nn.Module):
         X_ns[:, sen_idx] = 0.  # mute this sensitive dim
         loss_mse = nn.MSELoss(reduction='mean')
 
-        perm = torch.randperm(len(X_ns))
-        idx = perm[: 10]
-        X_ns = X_ns[idx]
-        X_pred = X_pred[idx]
+        # perm = torch.randperm(len(X_ns))
+        # idx = perm[: 10]
+        # X_ns = X_ns[idx]
+        # X_pred = X_pred[idx]
         loss_reconst_x = loss_mse(X_pred, X_ns)
-        if loss_reconst_x > 100:
-            print("non-Sensitivity X")
-            print(X_ns[: 10])
-            print("Predict X")
-            print(X_pred[: 10])
-            print(loss_reconst_x)
+        # if loss_reconst_x > 100:
+        #     print("non-Sensitivity X")
+        #     print(X_ns[: 10])
+        #     print("Predict X")
+        #     print(X_pred[: 10])
+        #     print(loss_reconst_x)
 
         loss_ce = nn.CrossEntropyLoss()
         loss_s = loss_ce(S_agg_pred, S_agg_cat.view(-1))  # S_agg_pred: n x K, S_agg: n
