@@ -69,9 +69,9 @@ class CFDA(nn.Module):
             sampled_z = gaussian_noise * std + mean
             print(X.type())
             print(mean.type())
-            print(hidden)
-            print(sampled_z)
-            print(logstd)
+            print(hidden.type())
+            print(sampled_z.type())
+            print(logstd.type())
             print(torch.any(torch.isnan(std)).item())
             print(torch.any(torch.isinf(std)).item())
         else:
