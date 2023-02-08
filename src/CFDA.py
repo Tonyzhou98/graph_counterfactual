@@ -138,7 +138,7 @@ class CFDA(nn.Module):
         loss_mse = nn.MSELoss(reduction='mean')
 
         perm = torch.randperm(len(X_ns))
-        idx = perm[: 10]
+        idx = perm[: 64]
         print("non-Sensitivity X")
         print(X_ns[idx])
         print("Predict X")
