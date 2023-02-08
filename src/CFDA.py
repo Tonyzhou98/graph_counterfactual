@@ -64,8 +64,8 @@ class CFDA(nn.Module):
             print(mean)
             print(sampled_z)
             print(std)
-            print(torch.any(torch.isnan(std)).item())
-            print(torch.any(torch.isinf(std)).item())
+            print(torch.isnan(std))
+            print(torch.isinf(std))
         else:
             sampled_z = mean
         return sampled_z
