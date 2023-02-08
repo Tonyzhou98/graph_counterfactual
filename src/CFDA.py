@@ -55,7 +55,7 @@ class CFDA(nn.Module):
         return sampled_z
 
     def encode_X(self, X):
-        X = self.batch_norm_input_X(X)
+        X = self.batch_norm_input_x(X)
         hidden = self.base_gcn_x(X)
         hidden = self.batch_norm_hidden_x(hidden)
         mean = self.gcn_mean_x(hidden)
