@@ -142,11 +142,12 @@ class CFDA(nn.Module):
         idx = perm[: 64]
         X_ns = X_ns[idx]
         X_pred = X_pred[idx]
-        print("non-Sensitivity X")
-        print(X_ns)
-        print("Predict X")
-        print(X_pred)
         loss_reconst_x = loss_mse(X_pred, X_ns)
+        if loss_reconst_x > 10:
+            print("non-Sensitivity X")
+            print(X_ns[: 10])
+            print("Predict X")
+            print(X_pred[: 10])
         print(loss_reconst_x)
 
         loss_ce = nn.CrossEntropyLoss()
