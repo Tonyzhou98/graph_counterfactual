@@ -14,37 +14,25 @@ class CFVAE(nn.Module):
         self.h_dim = h_dim
         self.s_num = 4
         # A
-        self.batch_norm_input = nn.BatchNorm1d(input_dim)
         self.base_gcn = GraphConvSparse(input_dim, h_dim, adj)
-        self.batch_norm_hidden = nn.BatchNorm1d(h_dim)
         self.gcn_mean = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
-        self.batch_norm_mean = nn.BatchNorm1d(h_dim)
         self.gcn_logstddev = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
-        self.batch_norm_dev = nn.BatchNorm1d(h_dim)
         self.pred_a = nn.Sequential(nn.Linear(h_dim + 1, adj.shape[1]), nn.Sigmoid())
         # X
-        self.batch_norm_input_x = nn.BatchNorm1d(input_dim)
         self.base_gcn_x = GraphConvSparse(input_dim, h_dim, adj)
-        self.batch_norm_hidden_x = nn.BatchNorm1d(h_dim)
         self.gcn_mean_x = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
-        self.batch_norm_mean_x = nn.BatchNorm1d(h_dim)
-        self.batch_norm_dev_x = nn.BatchNorm1d(h_dim)
         self.gcn_logstddev_x = GraphConvSparse(h_dim, h_dim, adj, activation=lambda x: x)
 
         # reconst_X
         self.reconst_X = nn.Sequential(nn.Linear(h_dim + 1, input_dim))
-        self.reconst_batch_norm = nn.BatchNorm1d(input_dim)
         # pred_S
         self.pred_s = nn.Sequential(nn.Linear(h_dim + h_dim, self.s_num), nn.Softmax())
 
     def encode_A(self, X):
-        mask_X = self.batch_norm_input(X)
+        mask_X = X
         hidden = self.base_gcn(mask_X)
-        hidden = self.batch_norm_hidden(hidden)
         mean = self.gcn_mean(hidden)
-        mean = self.batch_norm_mean(mean)
         logstd = self.gcn_logstddev(hidden)
-        logstd = self.batch_norm_dev(logstd)
         gaussian_noise = torch.randn_like(mean, requires_grad=True)
         # print(gaussian_noise.size())
         # print(logstd.size())
@@ -57,13 +45,9 @@ class CFVAE(nn.Module):
         return sampled_z
 
     def encode_X(self, X):
-        X = self.batch_norm_input_x(X)
         hidden = self.base_gcn_x(X)
-        hidden = self.batch_norm_hidden_x(hidden)
         mean = self.gcn_mean_x(hidden)
-        mean = self.batch_norm_mean_x(mean)
         logstd = self.gcn_logstddev_x(hidden)
-        logstd = self.batch_norm_dev_x(logstd)
         gaussian_noise = torch.randn_like(mean, requires_grad=True)
         if self.training and self.type == 'VGAE':
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
@@ -100,15 +84,10 @@ class CFVAE(nn.Module):
         return A_pred, X_pred
 
     def forward(self, X, sen_idx):
-        # encoder: X\S, adj -> Z
-        # decoder: Z + S' -> X', A'
-        S = X[:, sen_idx].view(-1, 1)
-        X_ns = X.clone()
-        X_ns[:, sen_idx] = 0.  # mute this dim
-        Z_a, Z_x = self.encode(X_ns)
-        A_pred, X_pred = self.pred_graph(Z_a, Z_x, S)
-        S_agg_pred = self.pred_S_agg(torch.cat([Z_a, Z_x], dim=1))
-        return A_pred, X_pred, S_agg_pred
+        # reproduce the causal VAE here
+        hidden = self.base_gcn_x(X)
+        q_m, q_v = self.gcn_mean_x(hidden), self.gcn_logstddev_x(hidden)
+        
 
     def loss_function(self, adj, X, sen_idx, S_agg_cat, A_pred, X_pred, S_agg_pred):
         # loss_reconst
