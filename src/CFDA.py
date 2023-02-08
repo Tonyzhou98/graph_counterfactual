@@ -170,7 +170,6 @@ class CFDA(nn.Module):
 
             for i in range(5):
                 optimizer_2.zero_grad()
-
                 A_pred, X_pred, S_agg_pred = self.forward(X, sen_idx)
                 loss_result = self.loss_function(adj, X, sen_idx, S_agg_cat, A_pred, X_pred, S_agg_pred)
 
