@@ -39,7 +39,8 @@ class CFDA(nn.Module):
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
             std = torch.exp(logstd)
             if torch.any(torch.isinf(std)).item():
-                std = torch.ones_like(logstd) * 1e12
+                # if it is infinity, make the std to 0
+                std = torch.zeros_like(logstd)
             sampled_z = gaussian_noise * std + mean
         else:
             sampled_z = mean
@@ -54,7 +55,7 @@ class CFDA(nn.Module):
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
             std = torch.exp(logstd)
             if torch.any(torch.isinf(std)).item():
-                std = torch.ones_like(logstd) * 1e12
+                std = torch.zeros_like(logstd)
             sampled_z = gaussian_noise * std + mean
         else:
             sampled_z = mean
