@@ -141,6 +141,7 @@ class CFDA(nn.Module):
         print("Predict X")
         print(X_pred)
         loss_reconst_x = loss_mse(X_pred, X_ns)
+        print(loss_reconst_x)
 
         loss_ce = nn.CrossEntropyLoss()
         loss_s = loss_ce(S_agg_pred, S_agg_cat.view(-1))  # S_agg_pred: n x K, S_agg: n
@@ -251,7 +252,6 @@ class GraphConvSparse(nn.Module):
     def forward(self, inputs):
         x = inputs
         x = torch.mm(x, self.weight)
-        print(self.weight)
         x = torch.mm(self.adj, x)
         outputs = self.activation(x)
         return outputs
