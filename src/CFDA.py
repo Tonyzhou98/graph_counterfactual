@@ -32,6 +32,7 @@ class CFDA(nn.Module):
 
         # reconst_X
         self.reconst_X = nn.Sequential(nn.Linear(h_dim + 1, input_dim))
+        self.reconst_batch_norm = nn.BatchNorm1d(input_dim)
         # pred_S
         self.pred_s = nn.Sequential(nn.Linear(h_dim + h_dim, self.s_num), nn.Softmax())
 
@@ -137,12 +138,14 @@ class CFDA(nn.Module):
         X_ns[:, sen_idx] = 0.  # mute this sensitive dim
         loss_mse = nn.MSELoss(reduction='mean')
 
-        perm = torch.randperm(len(X_ns))
-        idx = perm[: 64]
+        # perm = torch.randperm(len(X_ns))
+        # idx = perm[: 64]
+        X_ns = self.reconst_batch_norm(X_ns)
         print("non-Sensitivity X")
-        print(X_ns.type())
+        print(X_ns)
         print("Predict X")
-        loss_reconst_x = loss_mse(X_pred[idx], X_ns[idx])
+        print(X_pred)
+        loss_reconst_x = loss_mse(X_pred, X_ns)
         print(loss_reconst_x)
 
         loss_ce = nn.CrossEntropyLoss()
