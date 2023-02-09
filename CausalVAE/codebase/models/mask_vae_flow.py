@@ -60,6 +60,7 @@ class CausalVAE(nn.Module):
         q_m, q_v = self.enc.encode(x.to(device))
         q_m, q_v = q_m.reshape([q_m.size()[0], self.z1_dim, self.z2_dim]), torch.ones(q_m.size()[0], self.z1_dim,
                                                                                       self.z2_dim).to(device)
+        # q_v is the one constant, q_m and q_v represent the mean and variance of epsilon
         print("The size of q_m")
         print(q_m.size())
         print("The size of q_v")
@@ -76,12 +77,18 @@ class CausalVAE(nn.Module):
             m_zm, m_zv = self.dag.mask_z(decode_m.to(device)).reshape(
                 [q_m.size()[0], self.z1_dim, self.z2_dim]), decode_v.reshape([q_m.size()[0], self.z1_dim, self.z2_dim])
             m_u = self.dag.mask_u(label.to(device))
+            print("The size of m_zm")
+            print(m_zm.size())
+            print("The size of m_u")
+            print(m_u.size())
 
             # mask
             f_z = self.mask_z.mix(m_zm).reshape([q_m.size()[0], self.z1_dim, self.z2_dim]).to(device)
             e_tilde = self.attn.attention(decode_m.reshape([q_m.size()[0], self.z1_dim, self.z2_dim]).to(device),
                                           q_m.reshape([q_m.size()[0], self.z1_dim, self.z2_dim]).to(device))[0]
             f_z1 = f_z + e_tilde
+            print("The size of f_z1")
+            print(f_z1.size())
 
             if mask != None and mask == 2:
                 z_mask = torch.ones(q_m.size()[0], self.z1_dim, self.z2_dim).to(device) * adj
@@ -92,18 +99,20 @@ class CausalVAE(nn.Module):
             m_zv = torch.ones([q_m.size()[0], self.z1_dim, self.z2_dim]).to(device)
             z_given_dag = ut.conditional_sample_gaussian(f_z1, q_v * lambdav)
 
-        decoded_bernoulli_logits, x1, x2, x3, x4 = self.dec.decode_sep(
+        decoded_bernoulli_logits, _, _, _, _ = self.dec.decode_sep(
             z_given_dag.reshape([z_given_dag.size()[0], self.z_dim]), label.to(device))
 
+        print("The Decoded Bernoulli Size")
+        print(decoded_bernoulli_logits.size())
         rec = ut.log_bernoulli_with_logits(x, decoded_bernoulli_logits.reshape(x.size()))
+        # the first term of equation 10
         rec = -torch.mean(rec)
 
-        p_m, p_v = torch.zeros(q_m.size()), torch.ones(q_m.size())
+        # cp_m is the mean of conditional prior p(z|u)
         cp_m, cp_v = ut.condition_prior(self.scale, label, self.z2_dim)
-
         cp_v = torch.ones([q_m.size()[0], self.z1_dim, self.z2_dim]).to(device)
-        cp_z = ut.conditional_sample_gaussian(cp_m.to(device), cp_v.to(device))
-        kl = torch.zeros(1).to(device)
+
+        p_m, p_v = torch.zeros(q_m.size()), torch.ones(q_m.size())
         kl = 0.3 * ut.kl_normal(q_m.view(-1, self.z_dim).to(device), q_v.view(-1, self.z_dim).to(device),
                                 p_m.view(-1, self.z_dim).to(device), p_v.view(-1, self.z_dim).to(device))
 
@@ -112,11 +121,12 @@ class CausalVAE(nn.Module):
                                        cp_v[:, i, :].to(device))
         kl = torch.mean(kl)
         mask_kl = torch.zeros(1).to(device)
-        mask_kl2 = torch.zeros(1).to(device)
         for i in range(self.z1_dim):
+            # the third term of equation 10
             mask_kl = mask_kl + 1 * ut.kl_normal(f_z1[:, i, :].to(device), cp_v[:, i, :].to(device),
                                                  cp_m[:, i, :].to(device), cp_v[:, i, :].to(device))
         u_loss = torch.nn.MSELoss()
+        # equation 11 to reconstruct u (the truth label)
         mask_l = torch.mean(mask_kl) + u_loss(g_u, label.float().to(device))
         nelbo = rec + kl + mask_l
         return nelbo, kl, rec, decoded_bernoulli_logits.reshape(x.size()), z_given_dag
