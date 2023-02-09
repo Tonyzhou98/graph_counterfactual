@@ -51,7 +51,8 @@ class CausalVAE(nn.Module):
             rec: tensor: (): ELBO Reconstruction term
         """
         assert label.size()[1] == self.z1_dim
-
+        print("The size of X")
+        print(x.size())
         q_m, q_v = self.enc.encode(x.to(device))
         q_m, q_v = q_m.reshape([q_m.size()[0], self.z1_dim, self.z2_dim]), torch.ones(q_m.size()[0], self.z1_dim,
                                                                                       self.z2_dim).to(device)
