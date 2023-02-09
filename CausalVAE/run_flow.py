@@ -87,7 +87,7 @@ pprint(vars(args))
 print('Model name:', model_name)
 lvae = CausalVAE(name=model_name, z_dim=16).to(device)
 if not os.path.exists(
-        './figs_vae/'):  # 判断所在目录下是否有该文件名的文件�?        os.makedirs('./logitdata_{}_{}/train/'.format(sample_num, context_dim))
+        './figs_vae/'):  # 判断所在目录下是否有该文件名的文件?        os.makedirs('./logitdata_{}_{}/train/'.format(sample_num, context_dim))
     os.makedirs('./figs_vae/')
 
 dataset_dir = './causal_data/flow_noise'
