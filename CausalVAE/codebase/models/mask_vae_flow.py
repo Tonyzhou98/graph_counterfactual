@@ -72,23 +72,23 @@ class CausalVAE(nn.Module):
                 z_mask = torch.ones(q_m.size()[0], self.z1_dim, self.z2_dim).to(device) * adj
                 decode_m[:, mask, :] = z_mask[:, mask, :]
                 decode_v[:, mask, :] = z_mask[:, mask, :]
+
             m_zm, m_zv = self.dag.mask_z(decode_m.to(device)).reshape(
                 [q_m.size()[0], self.z1_dim, self.z2_dim]), decode_v.reshape([q_m.size()[0], self.z1_dim, self.z2_dim])
             m_u = self.dag.mask_u(label.to(device))
+
             # mask
-
             f_z = self.mask_z.mix(m_zm).reshape([q_m.size()[0], self.z1_dim, self.z2_dim]).to(device)
-
             e_tilde = self.attn.attention(decode_m.reshape([q_m.size()[0], self.z1_dim, self.z2_dim]).to(device),
                                           q_m.reshape([q_m.size()[0], self.z1_dim, self.z2_dim]).to(device))[0]
-
             f_z1 = f_z + e_tilde
+
             if mask != None and mask == 2:
                 z_mask = torch.ones(q_m.size()[0], self.z1_dim, self.z2_dim).to(device) * adj
                 f_z1[:, mask, :] = z_mask[:, mask, :]
                 m_zv[:, mask, :] = z_mask[:, mask, :]
-            g_u = self.mask_u.mix(m_u).to(device)
 
+            g_u = self.mask_u.mix(m_u).to(device)
             m_zv = torch.ones([q_m.size()[0], self.z1_dim, self.z2_dim]).to(device)
             z_given_dag = ut.conditional_sample_gaussian(f_z1, q_v * lambdav)
 
