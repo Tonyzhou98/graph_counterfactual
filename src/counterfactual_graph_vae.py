@@ -7,10 +7,146 @@ from torch import optim
 from CFDA import GraphConvSparse, glorot_init, sparse_dense_mul
 
 
+def kl_normal(qm, qv, pm, pv):
+    """
+    Computes the elem-wise KL divergence between two normal distributions KL(q || p)
+    and sum over the last dimension
+
+    Return: kl between each sample
+    """
+    # element-wise operation
+    # qm, qv, pm, pv = qm.to(device), qv.to(device), pm.to(device), pv.to(device)
+    kl = 0.5 * (torch.log(pv) - torch.log(qv) + qv / pv + (qm - pm).pow(2) / pv - 1)
+    # sum over all dimensions except for batch
+    kl = kl.sum(-1)
+    kl = kl.sum(-1)
+    # print("log var1", qv)
+    if torch.isnan(kl.any()):
+        print("\n\n\n\noveflow\n\n\n\n\n\n")
+    return kl
+
+
+def conditional_sample_gaussian(m, v, device):
+    sample = torch.randn(m.size()).to(device)
+    z = m.to(device) + (v.to(device) ** 0.5) * sample
+    return z
+
+
+class CausalDAG(nn.Module):
+    """
+    creates a causal diagram A
+
+
+    """
+
+    def __init__(self, num_concepts, dim_per_concept, inference=False, bias=False, g_dim=32):
+
+        super(CausalDAG, self).__init__()
+        self.num_concepts = num_concepts
+        self.dim_per_concept = dim_per_concept
+
+        self.A = nn.Parameter(torch.zeros(num_concepts, num_concepts))
+        self.I = nn.Parameter(torch.eye(num_concepts))
+        self.I.requires_grad = False
+        if bias:
+            self.bias = Parameter(torch.Tensor(num_concepts))
+        else:
+            self.register_parameter('bias', None)
+
+        nets_z = []
+        nets_label = []
+
+        for _ in range(num_concepts):
+            nets_z.append(
+                nn.Sequential(
+                    nn.Linear(dim_per_concept, g_dim),
+                    nn.ELU(),
+                    nn.Linear(g_dim, dim_per_concept)
+                )
+            )
+
+            nets_label.append(
+                nn.Sequential(
+                    nn.Linear(1, g_dim),
+                    nn.ELU(),
+                    nn.Linear(g_dim, 1)
+                )
+            )
+        self.nets_z = nn.ModuleList(nets_z)
+        self.nets_label = nn.ModuleList(nets_label)
+
+    def calculate_z(self, epsilon):
+        """
+        convert epsilon to z using the SCM assumption and causal diagram A
+
+        """
+
+        C = torch.inverse(self.I - self.A.t())
+
+        if epsilon.dim() > 2:  # one concept is represented by multiple dimensions
+            z = F.linear(epsilon.permute(0, 2, 1), C, self.bias)
+            z = z.permute(0, 2, 1).contiguous()
+
+        else:
+            z = F.linear(epsilon, C, self.bias)
+        return z
+
+    def calculate_epsilon(self, z):
+        """
+        convert epsilon to z using the SCM assumption and causal diagram A
+
+        """
+
+        C_inv = self.I - self.A.t()
+
+        if z.dim() > 2:  # one concept is represented by multiple dimensions
+            epsilon = F.linear(z.permute(0, 2, 1), C_inv, self.bias)
+            epsilon = epsilon.permute(0, 2, 1).contiguous()
+
+        else:
+            epsilon = F.linear(z, C, self.bias)
+        return epsilon
+
+    def mask(self, x):
+        if x.dim() == 2:
+            x = x.unsqueeze(dim=-1).cuda()
+        res = torch.matmul(self.A.t(), x)
+        return res
+
+    def g_z(self, x):
+        """
+        apply nonlinearity for more stable approximation
+
+        """
+        x_flatterned = x.view(-1, self.num_concepts * self.dim_per_concept)
+        concepts = torch.split(x_flatterned, self.dim_per_concept, dim=1)
+        res = []
+        for i, concept in enumerate(concepts):
+            t = self.nets_z[i](concept)
+            res.append(t)
+        x = torch.concat(res, dim=1).reshape([-1, self.num_concepts, self.dim_per_concept])
+        return x
+
+    def g_label(self, x):
+        """
+        apply nonlinearity for more stable approximation
+
+        """
+        x_flatterned = x.view(-1, self.num_concepts)
+        concepts = torch.split(x_flatterned, 1, dim=1)
+        res = []
+        for i, concept in enumerate(concepts):
+            res.append(self.nets_label[i](concept))
+        x = torch.concat(res, dim=1).reshape([-1, self.num_concepts])
+        return x
+
+    def forward(self, x):
+        return self.g(self.mask(x))
+
+
 class CFVAE(nn.Module):
     def __init__(self, h_dim, input_dim, adj):
         super(CFVAE, self).__init__()
-        self.type = 'VGAE'
         self.h_dim = h_dim
         self.s_num = 4
         # A
@@ -27,6 +163,10 @@ class CFVAE(nn.Module):
         self.reconst_X = nn.Sequential(nn.Linear(h_dim + 1, input_dim))
         # pred_S
         self.pred_s = nn.Sequential(nn.Linear(h_dim + h_dim, self.s_num), nn.Softmax())
+        # DAG network
+        num_concepts = input_dim
+        dim_per_concept = 4
+        self.dag = CausalDAG(num_concepts, dim_per_concept)
 
     def encode_A(self, X):
         mask_X = X
@@ -36,7 +176,7 @@ class CFVAE(nn.Module):
         gaussian_noise = torch.randn_like(mean, requires_grad=True)
         # print(gaussian_noise.size())
         # print(logstd.size())
-        if self.training and self.type == 'VGAE':
+        if self.training:
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
             std = torch.exp(0.5 * logstd)
             sampled_z = gaussian_noise * std + mean
@@ -49,7 +189,7 @@ class CFVAE(nn.Module):
         mean = self.gcn_mean_x(hidden)
         logstd = self.gcn_logstddev_x(hidden)
         gaussian_noise = torch.randn_like(mean, requires_grad=True)
-        if self.training and self.type == 'VGAE':
+        if self.training:
             # sampled_z = gaussian_noise * torch.exp(logstd) + mean
             std = torch.exp(0.5 * logstd)
             sampled_z = gaussian_noise * std + mean
@@ -64,29 +204,66 @@ class CFVAE(nn.Module):
         # A_pred = torch.sigmoid(torch.matmul(ZS, ZS.t()))
         return A_pred
 
-    def pred_features(self, Z, S):
-        ZS = torch.cat([Z, S], dim=1)
-        X_pred = self.reconst_X(ZS)
+    def pred_x(self, Z):
+        X_pred = self.reconst_X(Z)
         return X_pred
-
-    def pred_S_agg(self, Z):
-        S_pred = self.pred_s(Z)
-        return S_pred
-
-    def encode(self, X):
-        Z_a = self.encode_A(X)
-        Z_x = self.encode_X(X)
-        return Z_a, Z_x
 
     def pred_graph(self, Z_a, Z_x, S):
         A_pred = self.pred_adj(Z_a, S)
         X_pred = self.pred_features(Z_x, S)
         return A_pred, X_pred
 
-    def forward(self, X, sen_idx):
+    def forward(self, X, label):
         # reproduce the causal VAE here
         hidden = self.base_gcn_x(X)
-        q_m, q_v = self.gcn_mean_x(hidden), self.gcn_logstddev_x(hidden)
+        graph_size = X.size()[0]
+        e_m, e_v = self.gcn_mean_x(hidden), self.gcn_logstddev_x(hidden)
+        latent_dim = [graph_size, self.num_concepts, self.dim_per_concept]
+        e_m, e_v = e_m.reshape(latent_dim), torch.ones(latent_dim).cuda()
+        # z = (I - A.T)^(-1) * eps
+        z_m, z_v = self.dag.calculate_z(e_m), torch.ones(latent_dim).cuda()
+
+        masked_z_m = self.dag.mask(z_m)
+        masked_label = self.dag.mask(label)
+
+        # apply nonlinearity
+        masked_z_m = self.dag.g_z(masked_z_m)
+        pred_label = self.dag.g_label(masked_label)
+
+        # z for predicting label u
+        z = conditional_sample_gaussian(masked_z_m, e_v * self.lambdav, masked_z_m.device)
+        rec_x = self.pred_x(z)
+
+        # losses returns by number of samples in the batch
+
+        # reconstruction loss
+        rec = F.mse_loss(rec_x, X)
+
+        # KL between eps ~ N(0,1) and Q_phi(eps|x,u)
+        p_m, p_v = torch.zeros_like(e_m), torch.ones_like(e_v)
+        kl = self.beta * kl_normal(e_m, e_v, p_m, p_v)
+
+        # KL between Q_phi(z|x, u) and P_theta(z|u)
+        mean_label = label.mean(dim=0)
+        max_label = label.max(dim=0).values
+        normalized_label_mean = (label - mean_label) / max_label
+
+        cp_m = einops.repeat(normalized_label_mean, 'b d -> b d repeat', repeat=self.dim_per_concept).cuda()
+        cp_v = torch.ones_like(z_v).cuda()
+        kl += self.gamma * kl_normal(z_m, z_v, cp_m, cp_v)
+
+        if torch.isnan(kl.mean()):
+            print(kl)
+
+        kl = kl.mean()
+
+        # constraints
+        lm = kl_normal(z, cp_v, cp_m, cp_v)
+
+        lm = lm.mean()
+
+        lu = F.mse_loss(pred_label.squeeze(dim=-1).cuda(), label.cuda())
+        lu = lu.mean()
 
     def loss_function(self, adj, X, sen_idx, S_agg_cat, A_pred, X_pred, S_agg_pred):
         # loss_reconst
@@ -110,18 +287,12 @@ class CFVAE(nn.Module):
         X_ns[:, sen_idx] = 0.  # mute this sensitive dim
         loss_mse = nn.MSELoss(reduction='mean')
 
-        if self.training and self.type == 'VGAE':
-            perm = torch.randperm(len(X_ns))
-            idx = perm[: 1024]
-            X_ns = X_ns[idx]
-            X_pred = X_pred[idx]
+        # if self.training and self.type == 'VGAE':
+        #     perm = torch.randperm(len(X_ns))
+        #     idx = perm[: 1024]
+        #     X_ns = X_ns[idx]
+        #     X_pred = X_pred[idx]
         loss_reconst_x = loss_mse(X_pred, X_ns)
-        # if loss_reconst_x > 100:
-        #     print("non-Sensitivity X")
-        #     print(X_ns[: 10])
-        #     print("Predict X")
-        #     print(X_pred[: 10])
-        #     print(loss_reconst_x)
 
         loss_ce = nn.CrossEntropyLoss()
         loss_s = loss_ce(S_agg_pred, S_agg_cat.view(-1))  # S_agg_pred: n x K, S_agg: n
